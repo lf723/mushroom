@@ -54,6 +54,7 @@ install : all | $(PREFIX)
 	cp -r 3rd/skynet/luaclib $(PREFIX)/3rd/skynet/
 	cp -r 3rd/skynet/lualib $(PREFIX)/3rd/skynet/
 	cp -r 3rd/skynet/service $(PREFIX)/3rd/skynet/
+	cp -r 3rd/skynet/cservice $(PREFIX)/3rd/skynet/
 	cp start $(PREFIX)/
 	cp StressTest $(PREFIX)/
 	cp -r server $(PREFIX)
