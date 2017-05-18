@@ -57,6 +57,7 @@ install : all | $(PREFIX)
 	cp start $(PREFIX)/
 	cp StressTest $(PREFIX)/
 	cp -r server $(PREFIX)
+	cp 3rd/lua-cjson/cjson.so $(PREFIX)/common/luaclib/
 
 $(PREFIX) :
 	mkdir $(PREFIX)
