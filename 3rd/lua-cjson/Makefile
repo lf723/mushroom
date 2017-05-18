@@ -12,7 +12,7 @@
 
 ##### Build defaults #####
 LUA_VERSION =       5.3.1
-TARGET =            ../luaclib/cjson.so
+TARGET =            cjson.so
 PREFIX =            ../skynet/3rd/lua
 #CFLAGS =            -g -Wall -pedantic -fno-inline
 CFLAGS =            -O3 -Wall -pedantic -DNDEBUG -std=gnu99
