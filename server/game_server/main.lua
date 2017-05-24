@@ -1,13 +1,13 @@
 -- @Author: linfeng
 -- @Date:   2017-02-09 14:43:27
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-18 16:22:41
+-- @Last Modified time: 2017-05-23 15:16:18
 
 local skynet = require "skynet"
 require "skynet.manager"
 local snax = require "snax"
 local cluster = require "cluster"
-local loadEntity = require "entity.LoadEntity"
+local loadEntity = require "entity.EntityImpl"
 require "gamecfg"
 
 local function initLogicLuaService( selfNodeName )

@@ -13,7 +13,7 @@ export CENTER_CLUSTER_IP="127.0.0.1"
 export CENTER_CLUSTER_PORT="7003"
 
 #WEB监听端口
-export CENTER_WEB_PORT=83
+export CENTER_WEB_PORT=8000
 
 #skynet DEBUG端口(telnet),0为不开启
 export CENTER_DEBUG_PORT=0

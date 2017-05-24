@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-01-09 15:55:55
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-02-07 17:04:22
+-- @Last Modified time: 2017-05-23 10:52:36
 
 --Log Define, level = (0-199)
 --系统级日志
@@ -13,6 +13,8 @@ E_LOG_FATAL					=			{ name = "Fatal", 			level = 4 }
 
 --skynet的log信息
 E_LOG_SKYNET				=			{ name = "Skynet", 			level = 5 }
+
+E_LOG_DB					=			{ name = "Db", 				level = 6 }
 
 
 --系统相关日志写入
@@ -26,7 +28,8 @@ function LOG_SYS( loginfo, fmt, ... )
 	loginfo.msg = msg
 	loginfo.dir = LOG_PATH
 	loginfo.basename = true
-	SM.syslog.post.log(loginfo) --loginfo = { name = "", level = x, msg = "", dir = "", basename = true}
+	loginfo.rolltype = 1 --按天滚动
+	SM.syslog.post.log(loginfo) --loginfo = { name = "", level = x, msg = "", dir = "", basename = true, rolltype = 1}
 end
 
 --用户数据相关日志写入(运营向)
@@ -35,7 +38,8 @@ function LOG_USER( loginfo, fmt, ... )
 	loginfo.msg = msg
 	loginfo.dir = EVENT_LOG_PATH
 	loginfo.basename = false
-	SM.syslog.post.log(loginfo) --loginfo = { name = "", level = x, msg = "", dir = "", basename = false}
+	loginfo.rolltype = 0 --按小时滚动
+	SM.syslog.post.log(loginfo) --loginfo = { name = "", level = x, msg = "", dir = "", basename = false, rolltype = 0}
 end
 
 

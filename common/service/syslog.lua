@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-01-09 15:32:12
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-02-07 17:01:12
+-- @Last Modified time: 2017-05-22 10:23:51
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -20,7 +20,7 @@ local function LogWorker( ... )
 	while true do
 		if log_info[1] ~= nil then
 			for _,log in pairs(log_info) do
-				logger.write(log.level, log.name, log.msg, log.dir, log.basename)
+				logger.write(log.level, log.name, log.msg, log.dir, log.basename, log.rolltype)
 			end
 			log_info = {}
 			sleep_interval = 1

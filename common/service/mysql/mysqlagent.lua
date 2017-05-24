@@ -1,16 +1,31 @@
 -- @Author: linfeng
 -- @Date:   2017-02-20 15:53:48
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-10 16:01:57
+-- @Last Modified time: 2017-05-18 17:54:01
 
 local skynet = require "skynet"
 require "skynet.manager"
+local snax = require "snax"
 local mysql = require "mysql"
 
 local mysqlClient
 
-function init( conf )
-	mysqlClient = assert(mongo.client(conf),"connect to mongodb fail:"..tostring(conf))
+function init( ... )
+	local function on_connect(db)
+		db:query("set charset utf8");
+	end
+	
+	local opts = {
+		host = skynet.getenv("mysqlip"),
+		port = tonumber(skynet.getenv("mysqlport")),
+		database = skynet.getenv("mysqldb"),
+		user = skynet.getenv("mysqluser"),
+		password = skynet.getenv("mysqlpwd"),
+		max_packet_size = 1024 * 1024,
+		on_connect = on_connect
+	}
+
+	mysqlClient = assert(mysql.connect(opts),"connect to mysql fail:"..tostring(opts))
 end
 
 function exit( ... )

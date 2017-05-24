@@ -1,9 +1,9 @@
 -- @Author: linfeng
 -- @Date:   2015-06-17 09:49:05
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-17 17:17:36
+-- @Last Modified time: 2017-05-23 15:16:18
 local skynet = require "skynet"
-local LoadEntity = require "LoadEntity"
+local EntityImpl = require "EntityImpl"
 require "Entity"
 
 -- 定义ConfigEntity类型
@@ -22,7 +22,7 @@ function ConfigEntity:Init()
 end
 
 function ConfigEntity:Load()
-	local rs = LoadEntity.LoadConfig(self.tbname)
+	local rs = EntityImpl.LoadConfig(self.tbname)
 	if rs then
 		self.recordset = rs
 	end
@@ -32,23 +32,18 @@ function ConfigEntity:Unload()
 	self.recordset = nil
 end
 
-function ConfigEntity:Get(...)
-	local t = { ... }
-	assert(#t > 0)
-	local key
-	if #t == 1 then
-		key = t[1]
-	else
-		key = ""
-		for i = 1, #t do
-			if i > 1 then
-				key = key .. ":"
-			end
-			key = key .. tostring(t[i])
+function ConfigEntity:Get( key, fields )
+	if not fields then
+		return self.recordset[key]
+	elseif type(fields) == "table" then
+		local ret = {}
+		for _,v in pairs(fields) do
+			ret[v] = self.recordset[key][v]
 		end
+		return ret
+	elseif type(fields) == "string" then
+		return self.recordset[key][fields]
 	end
-
-	return self.recordset[key] or {}
 end
 
 

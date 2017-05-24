@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-06 17:39:27
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-18 11:27:12
+-- @Last Modified time: 2017-05-18 17:16:05
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -31,4 +31,4 @@ LOG_PATH = skynet.getenv("logpath")
 EVENT_LOG_PATH = skynet.getenv("eventlogpath")
 
 --使用的数据库
-G_DBTYPE = skynet.getenv("db")
+G_DBTYPE = skynet.getenv("dbtype")

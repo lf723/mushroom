@@ -16,7 +16,7 @@ export LOGIN_CLUSTER_PORT="7002"
 export LOGIN_PORT=10000
 
 #WEB监听端口
-export LOGIN_WEB_PORT=82
+export LOGIN_WEB_PORT=8003
 
 #skynet DEBUG端口(telnet),0为不开启
 export LOGIN_DEBUG_PORT=0

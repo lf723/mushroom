@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-20 15:53:38
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-18 09:24:02
+-- @Last Modified time: 2017-05-18 17:58:55
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -11,7 +11,7 @@ local mysqlAgentSvrs = {}
 local mysqlAgentNum
 
 local function initMysqlAgent( ... )
-	mysqlAgentNum = skynet.getenv("dbagent_num")
+	mysqlAgentNum = skynet.getenv("dbagent_num") or 10
 
 	for i=1,mysqlAgentNum do
 		table.insert(mysqlAgentSvrs,assert(snax.newservice("mysqlagent")))
@@ -25,7 +25,7 @@ local function exitMysqlAgent( ... )
 end
 
 function init( ... )
-	initMysqlAgent()
+	initMysqlAgent() 
 end
 
 function exit( ... )
@@ -36,6 +36,6 @@ end
 -- param : routeIndex,路由的index,如果为nil,则总是路由到第一个实例
 -- return : mysqlagent server instance,避免单节点设计
 function response.route( routeIndex )
-	local index = (routeIndex or 0) % mysqlAgentNum
-	return mysqlAgentSvrs[index]
+	local index = (routeIndex or 1) % mysqlAgentNum
+	return mysqlAgentSvrs[index].handle, "mysqlagent"
 end

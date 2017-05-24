@@ -13,7 +13,7 @@ export DB_CLUSTER_IP="127.0.0.1"
 export DB_CLUSTER_PORT="7003"
 
 #WEB监听端口
-export DB_WEB_PORT=83
+export DB_WEB_PORT=8001
 
 #skynet DEBUG端口(telnet),0为不开启
 export DB_DEBUG_PORT=0

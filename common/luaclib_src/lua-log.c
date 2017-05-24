@@ -37,8 +37,8 @@
 #define LOG_MAX 16*1024						// 单条LOG最长16K
 //#define LOG_BUFFER_SIZE 4*1024*1024		// 一个LOG缓冲区4M
 #define LOG_MESSAGE_SIZE 512				// 最大LOG消息数量
-#define LOG_LEVEL_NUM	200	 				// 最多200项LOG
-#define LOGGER_FNAME_LEN	64				// LOG文件名长度
+#define LOG_LEVEL_NUM	200	 			// 最多200项LOG
+#define LOGGER_FNAME_LEN	64				//LOG文件名长度
 
 static char logger_fname[LOG_LEVEL_NUM][LOGGER_FNAME_LEN];
 
@@ -54,14 +54,14 @@ struct buffer
 {
 	struct buffer* next;
 	struct buffer_message message[LOG_MESSAGE_SIZE];
-	int size;					// 缓冲区已使用字节数
+	int size;										// 缓冲区已使用字节数
 };
 
 struct buffer_list
 {
 	struct buffer* head;
 	struct buffer* tail;
-	int size;					// 缓冲区个数
+	int size;										// 缓冲区个数
 };
 
 struct logger
@@ -72,13 +72,15 @@ struct logger
 	char basename[64];
 	int use_basename[LOG_LEVEL_NUM];
 	char dirname[LOG_LEVEL_NUM][64];
-	size_t written_bytes[LOG_LEVEL_NUM];	// 已写入文件的字节数
-	int roll_hour[LOG_LEVEL_NUM];			// 同struct tm中的tm_hour
-	int flush_interval;		// 异步日志后端写入文件时间间隔
+	size_t written_bytes[LOG_LEVEL_NUM];			// 已写入文件的字节数
+	int roll_hour[LOG_LEVEL_NUM];					// 同struct tm中的tm_hour
+	int roll_day[LOG_LEVEL_NUM];					// 同struct tm中的tm_mday
+	int roll_type[LOG_LEVEL_NUM];					// 0 hour,1 day
+	int flush_interval;								// 异步日志后端写入文件时间间隔
 
-	struct buffer* curr_buffer;		// 当前缓冲区
-	struct buffer* next_buffer;		// 备用缓冲区
-	struct buffer_list buffers;		// 待写入文件的缓冲区列表
+	struct buffer* curr_buffer;						// 当前缓冲区
+	struct buffer* next_buffer;						// 备用缓冲区
+	struct buffer_list buffers;						// 待写入文件的缓冲区列表
 
 	int running;
 	pthread_t thread;
@@ -87,7 +89,7 @@ struct logger
 } inst;
 
 
-char* get_log_filename(int use_basename,const char* basename, int index, int loglevel)
+char* get_log_filename(int use_basename,const char* basename, int rolltype, int index, int loglevel)
 {
 	static char filename[128];			// 只有一个线程访问，不用担心线程安全问题
 	memset(filename, 0, sizeof(filename));
@@ -95,7 +97,11 @@ char* get_log_filename(int use_basename,const char* basename, int index, int log
 	struct tm tm;
 	time_t now = time(NULL);
 	localtime_r(&now, &tm);
-	strftime(timebuf, sizeof(timebuf), "%Y%m%d%H", &tm);
+
+	if(rolltype == 0)	//按小时滚动
+		strftime(timebuf, sizeof(timebuf), "%Y%m%d%H", &tm);
+	else if(rolltype == 1)
+		strftime(timebuf, sizeof(timebuf), "%Y%m%d", &tm);
 	if(index == 0)
 	{
 		if(strcmp(basename,DEFAULT_BASENAME) == 0 || use_basename == 0)
@@ -154,7 +160,7 @@ void rollfile(int loglevel)
 			if (mkdir(inst.dirname[loglevel], 0755) == -1)
 			{
 				saved_errno = errno;
-				fprintf(stderr, "mkdir error: %s,%s\n", strerror(saved_errno),inst.dirname[loglevel]);
+				fprintf(stderr, "mkdir error: %s,%s,%d\n", strerror(saved_errno),inst.dirname[loglevel],loglevel);
 				inst.handle[loglevel] = stdout;
 				//exit(EXIT_FAILURE);
 				return;
@@ -162,7 +168,7 @@ void rollfile(int loglevel)
 		}
 		else
 		{
-			fprintf(stderr, "opendir error: %s,%s\n", strerror(saved_errno),inst.dirname[loglevel]);
+			fprintf(stderr, "opendir error: %s,%s,%d\n", strerror(saved_errno),inst.dirname[loglevel],loglevel);
 			inst.handle[loglevel] = stdout;
 			//exit(EXIT_FAILURE);
 			return;
@@ -175,7 +181,7 @@ void rollfile(int loglevel)
 	while (1)
 	{
 		snprintf(filename, sizeof(filename), "%s/%s", inst.dirname[loglevel], 
-			get_log_filename(inst.use_basename[loglevel],inst.basename, index++, loglevel));
+			get_log_filename(inst.use_basename[loglevel], inst.basename, inst.roll_type[loglevel], index++, loglevel));
 
 		inst.handle[loglevel] = fopen(filename, "a+");
 		if (inst.handle[loglevel] == NULL)
@@ -201,7 +207,10 @@ void rollfile(int loglevel)
 			struct tm tm;
 			time_t now = time(NULL);
 			localtime_r(&now, &tm);
-			inst.roll_hour[loglevel] = tm.tm_hour;
+			if(inst.roll_type[loglevel] == 0)
+				inst.roll_hour[loglevel] = tm.tm_hour;
+			else if(inst.roll_type[loglevel] == 1)
+				inst.roll_hour[loglevel] = tm.tm_mday;
 
 			break;
 		}
@@ -210,7 +219,7 @@ void rollfile(int loglevel)
 	
 }
 
-void append(const char* logline, size_t len, int loglevel, const char* logdir, int use_basename)
+void append(const char* logline, size_t len, int loglevel, const char* logdir, int use_basename, int rolltype)
 {
 	pthread_mutex_lock(&inst.mutex);
 	if(inst.dirname[loglevel][0] == 0)
@@ -218,6 +227,8 @@ void append(const char* logline, size_t len, int loglevel, const char* logdir, i
 		strncpy(inst.dirname[loglevel],logdir,sizeof(inst.dirname[loglevel]));
 		inst.use_basename[loglevel] = use_basename;
 	}
+
+	inst.roll_type[loglevel] = rolltype;
 
 	bool notify = false;
 	int msg_size = inst.curr_buffer->size;
@@ -278,11 +289,8 @@ void append(const char* logline, size_t len, int loglevel, const char* logdir, i
 // 日志线程处理函数
 static inline void* worker_func(void* p)
 {
-#if !defined(__APPLE__)
 	struct timespec ts;
-#else
-	struct timeval ts;
-#endif
+
 	struct buffer_list buffers_to_write;
 	memset(&buffers_to_write, 0, sizeof(buffers_to_write));
 	// 准备两块空闲缓冲区
@@ -386,16 +394,21 @@ static inline void* worker_func(void* p)
 		{
 			for(int i = 0; i < node->size; i++)
 			{
-				if(!inst.handle[node->message[i].loglevel])
+				int lv = node->message[i].loglevel;
+				if(!inst.handle[lv])
+					rollfile(lv); 	//第一次写入,创建文件
+
+				if (inst.handle[lv])
 				{
-					rollfile(node->message[i].loglevel); 	//第一次写入,创建文件
-				}
-				if (inst.handle[node->message[i].loglevel])
-				{
-					fwrite_unlocked(node->message[i].data, 1, node->message[i].len, inst.handle[node->message[i].loglevel]);
+					// 新的一小时、天，滚动日志
+					if ((inst.roll_type[lv] == 0 && inst.roll_hour[i] > 0 && inst.roll_hour[i] != tm.tm_hour)
+						|| (inst.roll_type[lv] == 1 && inst.roll_day[i] > 0 && inst.roll_day[i] != tm.tm_mday))
+						rollfile(lv);
 					
-					inst.written_bytes[node->message[i].loglevel] += node->size;
-					need_flush[node->message[i].loglevel] = 1;
+					fwrite_unlocked(node->message[i].data, 1, node->message[i].len, inst.handle[lv]);
+					
+					inst.written_bytes[lv] += node->size;
+					need_flush[lv] = 1;
 				}
 			}
 			
@@ -408,16 +421,9 @@ static inline void* worker_func(void* p)
 			{
 				fflush(inst.handle[i]);
 				if (inst.written_bytes[i] > inst.rollsize)
-				{
 					rollfile(i); //超出一个文件大小,滚动日志
-				}
 			}
 
-			// 新的一小时，滚动日志
-			if (inst.roll_hour[i] >= 0 && inst.roll_hour[i] != tm.tm_hour)
-			{
-				rollfile(i);
-			}
 		}
 
 
@@ -478,6 +484,7 @@ int linit(lua_State *L)
 	inst.loglevel = lua_tointeger(L, 1);
 	inst.rollsize = lua_tointeger(L, 2);
 	inst.flush_interval = lua_tointeger(L, 3);
+
 	inst.rollsize = inst.rollsize > 0 ? inst.rollsize * ONE_MB : DEFAULT_ROLL_SIZE;
 	inst.flush_interval = inst.flush_interval > 0 ? inst.flush_interval : DEFAULT_INTERVAL;
 	inst.curr_buffer = (struct buffer*)calloc(1, sizeof(struct buffer));
@@ -532,6 +539,7 @@ int lwrite(lua_State *L)
 	char* data = (char*)lua_tolstring(L, 3, NULL);
 	char* dir = (char*)lua_tolstring(L, 4, NULL);
 	int basename = (int)lua_toboolean(L, 5);
+	int rolltype = (int)lua_tointeger(L, 6);
 
 	if (data == NULL || prefix == NULL || dir == NULL)
 		return 0;
@@ -541,7 +549,7 @@ int lwrite(lua_State *L)
 			strncpy(logger_fname[loglevel],prefix,LOGGER_FNAME_LEN);
 		char msg[LOG_MAX];
 		snprintf(msg, sizeof(msg), "%s\n", data);
-		append(msg, strlen(msg), loglevel, dir, basename);
+		append(msg, strlen(msg), loglevel, dir, basename, rolltype);
 	}
 
 	return 0;

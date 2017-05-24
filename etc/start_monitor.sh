@@ -13,7 +13,7 @@ export MONITOR_CLUSTER_IP="127.0.0.1"
 export MONITOR_CLUSTER_PORT="7000"
 
 #WEB监听端口
-export MONITOR_WEB_PORT=81
+export MONITOR_WEB_PORT=8004
 
 #skynet DEBUG端口(telnet),0为不开启
 export MONITOR_DEBUG_PORT=0
