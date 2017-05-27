@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-09 15:12:54
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-23 14:33:12
+-- @Last Modified time: 2017-05-25 15:16:20
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -11,10 +11,18 @@ local redisAgentSvrs = {}
 local redisAgentNum
 
 local function initRedisAgent( ... )
-	redisAgentNum = skynet.getenv("redisagent_num") or 10
+	redisAgentNum = skynet.getenv("redisnum") or 10
+
+	local conf = {
+		host = skynet.getenv("redisip"),
+		port = tonumber(skynet.getenv("redisport")),
+		auth = skynet.getenv("redisauth"),
+		db = tonumber(skynet.getenv("redisdb")) or 0
+	}
 
 	for i=1,redisAgentNum do
-		table.insert(redisAgentSvrs,assert(snax.newservice("redisagent")))
+		table.insert(redisAgentSvrs,assert(snax.newservice("redisagent",conf)))
+		conf.port = conf.port + 1
 	end
 end
 

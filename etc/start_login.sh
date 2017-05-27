@@ -8,6 +8,7 @@ export LOGIN_WORK_THREAD=8
 export LOGIN_DAEMON=0
 
 #cluster配置
+export MONITOR_NODE_NAME="monitor"
 export LOGIN_CLUSTER_NODE="login"
 export LOGIN_CLUSTER_IP="127.0.0.1"
 export LOGIN_CLUSTER_PORT="7002"

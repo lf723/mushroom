@@ -7,7 +7,7 @@ chmod +x ${prefix}redis-server
 pkill redis-server
 
 #定义初始端口
-initport=16379
+initport=6379
 
 for((i=1;i<=${redisInstaceNum};i++))
 do

@@ -8,6 +8,7 @@ export CENTER_WORK_THREAD=8
 export CENTER_DAEMON=0
 
 #cluster配置
+export MONITOR_NODE_NAME="monitor"
 export CENTER_CLUSTER_NODE="center"
 export CENTER_CLUSTER_IP="127.0.0.1"
 export CENTER_CLUSTER_PORT="7003"

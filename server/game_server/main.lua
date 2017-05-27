@@ -1,18 +1,18 @@
 -- @Author: linfeng
 -- @Date:   2017-02-09 14:43:27
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-23 15:16:18
+-- @Last Modified time: 2017-05-25 16:36:23
 
 local skynet = require "skynet"
 require "skynet.manager"
 local snax = require "snax"
 local cluster = require "cluster"
-local loadEntity = require "entity.EntityImpl"
+local EntityImpl = require "EntityImpl"
 require "gamecfg"
 
 local function initLogicLuaService( selfNodeName )
 	--init entity config to sharedata
-	loadEntity:SetEntityCfg(ConfigEntityCfg, CommonEntityCfg, UserEntityCfg)
+	EntityImpl:SetEntityCfg(ConfigEntityCfg, CommonEntityCfg, UserEntityCfg)
 end
 
 skynet.start(function ( ... )
@@ -39,6 +39,11 @@ skynet.start(function ( ... )
 	--init cluster node
 	SM.monitor_subscribe.req.connectMonitorAndPush(selfNodeName)
 	cluster.open(selfNodeName)
-	
+
+	--test
+	SM.user.req.Load(1,"db")
+	local ret = SM.user.req.Get(1,"power")
+	print(ret)
+
 	skynet.exit()
 end)

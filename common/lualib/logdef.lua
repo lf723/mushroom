@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-01-09 15:55:55
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-23 10:52:36
+-- @Last Modified time: 2017-05-25 14:31:43
 
 --Log Define, level = (0-199)
 --系统级日志
@@ -62,4 +62,8 @@ end
 
 function LOG_FATAL( fmt, ... )
 	LOG_SYS(E_LOG_FATAL,fmt, ...)
+end
+
+function LOG_SKYNET( fmt, ... )
+	LOG_SYS(E_LOG_SKYNET,fmt, ...)
 end

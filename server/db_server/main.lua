@@ -1,15 +1,18 @@
 -- @Author: linfeng
 -- @Date:   2017-01-19 15:25:15
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-02-09 14:52:47
+-- @Last Modified time: 2017-05-25 15:55:42
 
 local skynet = require "skynet"
 require "skynet.manager"
 local snax = require "snax"
 local cluster = require "cluster"
+local EntityImpl = require "EntityImpl"
+require "dbcfg"
 
 local function initLogicLuaService( selfNodeName )
-	
+	--init entity config to sharedata
+	EntityImpl:SetEntityCfg(ConfigEntityCfg, CommonEntityCfg, UserEntityCfg)
 end
 
 skynet.start(function ( ... )

@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-05-17 17:14:13
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-23 17:16:56
+-- @Last Modified time: 2017-05-27 18:04:49
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -50,13 +50,13 @@ function EntityImpl:loadConfigMongoImpl( tbname )
 	assert(false,"not impl loadConfigMongoImpl")
 end
 
-function EntityImpl:loadCommonMysqlImpl( obj )
+function EntityImpl:loadCommonMysqlImpl( tbname )
 	local ret = {}
 	local index = 0
 	local index_limit = 1000
 	local cmd = ""
 
-	local commonEntity = self:GetEntityCfg(TB_COMMON, obj.tbname)
+	local commonEntity = self:GetEntityCfg(TB_COMMON, tbname)
 
 	while true do
 		cmd = string.format("select * from %s limit %d,%d",commonEntity.name,index,index_limit)
@@ -69,7 +69,7 @@ function EntityImpl:loadCommonMysqlImpl( obj )
 			local decodeRow = cjson.decode(GetTableValueByIndex(row,2))
 
 			--set to memory
-			ret[tonumber(row[1]) or row[1]] = decodeRow
+			ret[tonumber(row[commonEntity.key])] = decodeRow
 		end
 
 		index = index + index_limit
@@ -77,31 +77,34 @@ function EntityImpl:loadCommonMysqlImpl( obj )
 	return ret
 end
 
-function EntityImpl:loadCommonMongoImpl( obj )
+function EntityImpl:loadCommonMongoImpl( tbname )
 	assert(false,"not impl loadCommonMongoImpl")
 end
 
-function EntityImpl:loadUserRedisImpl( tbname, uid, field )
-	local cmd = string.format("hmget %s:%d", tbname, uid)
+function EntityImpl:loadUserRedisImpl( tbname, uid )
+	local cmd = string.format("hgetall %s:%d", tbname, uid)
 	local ret = RedisExecute(cmd)
-	if ret then
-		if field then
-			return ret[field] --return field data
-		else
-			return ret --ret is a table
-		end
+
+	if ret and not table.empty(ret) then
+		return ret --ret is a table
 	end
 
 	return nil --not user data in redis, or expried, must reload from db(mysql or mongo)
 end
 
-function EntityImpl:loadUserMysqlImpl( obj, uid )
+function EntityImpl:loadUserMysqlImpl( tbname, uid )
 	local ret = {}
+	setmetatable(ret, { __mode = "k" } ) --key weak table
+
 	local cmd = ""
+	local userEntity = self:GetEntityCfg(TB_USER, tbname)
+	cmd = string.format("select * from %s where %s->'$.%s' = %d", 
+																userEntity.name, 
+																userEntity.value, 
+																userEntity.indexkey, 
+																uid
+						)
 
-	local userEntity = self:GetEntityCfg(TB_USER, obj.tbname)
-
-	cmd = string.format("select * from %s where %s = %d", userEntity.name, userEntity.key, uid)
 	local sqlRet = MySqlExecute(cmd)
 	if #sqlRet <= 0 then return end
 
@@ -109,57 +112,61 @@ function EntityImpl:loadUserMysqlImpl( obj, uid )
 		--json extract
 		assert(table.size(row) == 2, "mysql table("..userEntity.name..") schema must be key-value")
 		local decodeRow = cjson.decode(GetTableValueByIndex(row,2))
-		local redisDecodeRow = TableUnpackToString(decodeRow)
+		local redisDecodeRow = TableUnpackToString(decodeRow, true)
 
 		--set to redis
 		local redisKey = self:MakeRedisKey(decodeRow,userEntity.key)
-		cmd = string.format("hmset %s:%s %s",obj.tbname,redisKey,redisDecodeRow)
+		cmd = string.format("hmset %s:%s %s",userEntity.tbname,redisKey,redisDecodeRow)
 		RedisExecute(cmd) --default to first redis instance
 
 		--set to memory
-		ret[tonumber(row[1]) or row[1]] = decodeRow
+		ret = decodeRow
 	end
-	
+
 	return ret
 end
 
-function EntityImpl:loadUserMongoImpl( obj, uid )
+function EntityImpl:loadUserMongoImpl( tbname, uid )
 	assert(false,"not impl loadUserMongoImpl")
 end
 
-function EntityImpl:LoadConfig( obj )
+function EntityImpl:LoadConfig( tbname )
 	--从db获取config数据
 	if G_DBTYPE == DBTYPE_MYSQL then
-		return self:loadConfigMysqlImpl(obj.tbname)
+		return self:loadConfigMysqlImpl(tbname)
 	elseif G_DBTYPE == DBTYPE_MONGO then
-		return self:loadConfigMongoImpl(obj.tbname)
+		return self:loadConfigMongoImpl(tbname)
 	else
 		assert(false,"invalid dbtype:" .. G_DBTYPE .. ",only mysql or mongo")
 	end
 end
 
-function EntityImpl:LoadCommon( obj )
+function EntityImpl:LoadCommon( tbname )
 	--从db获取common数据
 	if G_DBTYPE == DBTYPE_MYSQL then
-		return self:loadCommonMysqlImpl(obj)
+		return self:loadCommonMysqlImpl(tbname)
 	elseif G_DBTYPE == DBTYPE_MONGO then
-		return self:loadCommonMongoImpl(obj)
+		return self:loadCommonMongoImpl(tbname)
 	else
 		assert(false,"invalid dbtype:" .. G_DBTYPE .. ",only mysql or mongo")
 	end
 end
 
-function EntityImpl:LoadUser( obj, uid, field )
-	--尝试从redis获取user数据
-	local ret = loadUserRedisImpl(obj.tbname, uid, field)
-	if not ret then
-		--从db获取user数据
-		if G_DBTYPE == DBTYPE_MYSQL then
-			return self:loadUserMysqlImpl(obj, uid)
-		elseif G_DBTYPE == DBTYPE_MONGO then
-			return self:loadUserMongoImpl(obj, uid)
-		else
-			assert(false,"invalid dbtype:" .. G_DBTYPE .. ",only mysql or mongo")
+function EntityImpl:LoadUser( tbname, uid, dbNode )
+	if dbNode then
+		return RpcCall(dbNode, REMOTE_DB_SERVICE, REMOTE_CALL, tbname, "Load", uid)
+	else
+		--尝试从redis获取user数据
+		local ret = self:loadUserRedisImpl(tbname, uid)
+		if not ret then
+			--从db获取user数据
+			if G_DBTYPE == DBTYPE_MYSQL then
+				return self:loadUserMysqlImpl(tbname, uid)
+			elseif G_DBTYPE == DBTYPE_MONGO then
+				return self:loadUserMongoImpl(tbname, uid)
+			else
+				assert(false,"invalid dbtype:" .. G_DBTYPE .. ",only mysql or mongo")
+			end
 		end
 	end
 end
@@ -211,11 +218,12 @@ function EntityImpl:UpdateUserMysql( tbname, dataIndex )
 		local redisCmd
 		for uid,data in pairs(dataIndex) do
 			--mysql
-			table.insert(sqlCmds,string.format("update %s set %s = %s where %d = %d;",
+			table.insert(sqlCmds,string.format("update %s set %s = %s where %s->'$.%s' = %d;",
 																				obj.tbname, 
 																				obj.value, 
 																				cjson.encode(data),
-																				obj.key,
+																				obj.value,
+																				obj.indexkey,
 																				uid)
 			)
 
@@ -308,11 +316,12 @@ function EntityImpl:DelUserMysql( tbname, dataKeys )
 
 	local sqlCmd
 	local redisCmd
-	for _,key in pairs(dataKeys) do
-		sqlCmd = string.format("delete from %s where %s = %d;",
+	for _,uid in pairs(dataKeys) do
+		sqlCmd = string.format("delete from %s where %s->'$.%s' = %d;",
 																			obj.tbname,
-																			obj.key,
-																			key						
+																			obj.value,
+																			obj.indexkey,
+																			uid						
 		)
 
 		--del obj.tbname by dataKeys's index to mysql
@@ -326,7 +335,7 @@ function EntityImpl:DelUserMysql( tbname, dataKeys )
 		end
 
 		--del redis user info
-		redisCmd = string.format("del %s:%d", obj.tbname, key)
+		redisCmd = string.format("del %s:%d", obj.tbname, uid)
 		RedisExecute(redisCmd, uid)
 	end
 end
@@ -379,39 +388,37 @@ function EntityImpl:AddCommon( tbname, dataRaw )
 	return true
 end
 
-function EntityImpl:AddUser( tbname, dataRaw )
+function EntityImpl:AddUser( tbname, id, dataRaw )
 	assert(type(dataRaw) == "table")
 	local obj = assert(self:GetEntityCfg(TB_USER,tbname))
-	local key = dataRaw[obj.key]
-	dataRaw[obj.key] = nil
-	local sqlCmd = string.format("insert into %s values(%d,%s)",obj.tbname, key, cjson.encode(dataRaw))
+	local indexkey = dataRaw[obj.indexkey]
+	local sqlCmd = string.format("insert into %s values(%d,%s)",obj.tbname, id, cjson.encode(dataRaw))
 
-	local ret = MySqlExecute(sqlCmd, key)
+	local ret = MySqlExecute(sqlCmd, indexkey)
 	if ret.badresult then
-		LOG_SYS(E_LOG_DB, "AddCommon err:%s,msg:%s",sqlCmd, ret.badresult)
+		LOG_SYS(E_LOG_DB, "AddUser Error:%s,msg:%s",sqlCmd, ret.badresult)
 		return false
 	end
 
 	--add to redis
-	local redisCmd = string.format("hmset %s:%d ", obj.tbname, key)
+	local redisCmd = string.format("hmset %s:%d ", obj.tbname, indexkey)
 	redisCmd = redisCmd .. table.concat(dataRaw, " ")
-	RedisExecute(redisCmd, key)
+	RedisExecute(redisCmd, indexkey)
 
 	return true
 end
 
-function EntityImpl:SetEntityCfg( config, user, common )
+function EntityImpl:SetEntityCfg( config, common, user )
 	local tb = {}
 	tb[TB_CONFIG] 	= 	config
-	tb[TB_USER] 	= 	user
 	tb[TB_COMMON] 	= 	common
+	tb[TB_USER] 	= 	user
 
 	sharedata.new(SHARE_ENTITY_CFG, tb)
 end
 
 function EntityImpl:GetEntityCfg( tbtype, tbname )
 	local tb = sharedata.query(SHARE_ENTITY_CFG)
-
 	if tbname and tb then
 		for _,v in pairs(tb[tbtype]) do
 			if v.name == tbname then

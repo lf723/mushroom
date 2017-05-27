@@ -1,7 +1,7 @@
 # @Author: linfeng
 # @Date:   2017-02-07 14:03:13
 # @Last Modified by:   linfeng
-# @Last Modified time: 2017-05-18 17:20:59
+# @Last Modified time: 2017-05-25 10:30:36
 
 #开启core,修改最大文件描述符
 ulimit -c unlimited
@@ -13,7 +13,8 @@ export GAME_WORK_THREAD=8
 export GAME_DAEMON=0
 
 #cluster配置
-export GAME_MONITOR_NODE="monitor"
+export MONITOR_NODE_NAME="monitor"
+export GAME_CLUSTER_NODE="game"
 export GAME_CLUSTER_IP="127.0.0.1"
 export GAME_CLUSTER_PORT="7004"
 
@@ -24,7 +25,7 @@ export GAME_WEB_PORT=8002
 export GAME_DEBUG_PORT=0
 
 #时区
-export GAME_TIMEZONE=8
+export GAME_TIMEDIFF=8
 
 #服务器ID
 export GAME_SERVER_ID=0

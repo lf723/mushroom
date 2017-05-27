@@ -2,7 +2,7 @@
 * @Author: linfeng
 * @Date:   2017-01-04 10:05:59
 * @Last Modified by:   linfeng
-* @Last Modified time: 2017-05-22 10:39:05
+* @Last Modified time: 2017-05-25 11:33:21
 */
 
 #include <unistd.h>
@@ -40,6 +40,7 @@ void ShowUsage()
 					"-m\tstart monitor server,default use etc/start_monitor.sh\n"
 					"-w\tstart world server,default use etc/start_world.sh\n"
 					"-r\tstart redis server,default use etc/start_redis.sh\n"
+					"-d\tstart db server,default use etc/start_db.sh\n"
 					"-s\t[name]\tstop server by name\n");
 }
 
@@ -137,6 +138,8 @@ int main(int argc, char* argv[])
 		&& !boot_redis)
 		ShowUsage();
 
+	if(boot_redis)
+		boot_server("redis", "etc/start_redis.sh");
 	if(stop_server)
 		kill_server(process_name);
 	if(boot_login)
@@ -153,8 +156,6 @@ int main(int argc, char* argv[])
 		boot_server("db", "etc/start_db.sh");
 	if(boot_world)
 		boot_server("world", "etc/start_world.sh");
-	if(boot_redis)
-		boot_server("redis", "etc/start_redis.sh");
-
+	
     return 0;
 }

@@ -37,7 +37,7 @@ cjson/Makefile :
 	git submodule update --init
 
 $(LUA_CLIB_PATH)/cjson.so : cjson/Makefile | $(LUA_CLIB_PATH)
-	cd 3rd/lua-cjson && $(MAKE) && cd -
+	cd 3rd/lua-cjson && $(MAKE) && cp cjson.so ../../common/luaclib/ && cd -
 
 start : common/luaclib_src/start.c
 	$(CC) $(CFLAGS) $^ -o $@
@@ -58,7 +58,6 @@ install : all | $(PREFIX)
 	cp start $(PREFIX)/
 	cp StressTest $(PREFIX)/
 	cp -r server $(PREFIX)
-	cp 3rd/lua-cjson/cjson.so $(PREFIX)/common/luaclib/
 
 $(PREFIX) :
 	mkdir $(PREFIX)

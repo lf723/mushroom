@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2015-06-17 09:49:05
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-23 15:16:18
+-- @Last Modified time: 2017-05-27 18:03:51
 local skynet = require "skynet"
 require "Entity"
 local EntityImpl = require "EntityImpl"
@@ -13,7 +13,7 @@ function UserEntity:ctor()
 end
 
 function UserEntity:Init()
-	
+	self.dbNode = {} --当存在dbNode时,不直接从redis or db读取数据,而是从相应的dbNode节点获取
 end
 
 function UserEntity:dtor()
@@ -23,115 +23,113 @@ function UserEntity:GetKey(row)
 	return row[self.key]
 end
 
-
 -- 加载玩家数据
-function UserEntity:Load(uid)
+function UserEntity:Load(uid, dbNode)
 	if not self.recordset[uid] then
-		local row = EntityImpl:LoadUser(self.tbname, uid)
-		if not table.empty(row) then
+		local row = EntityImpl:LoadUser(self.tbname, uid, dbNode)
+		if row and not table.empty(row) then
 			self.recordset[uid] = row
+			self.dbNode[uid] = dbNode
 		end
 	end
-
-end
-
--- 从DB重新同步数据
-function UserEntity:ReLoad(uid)
-
 end
 
 -- 卸载玩家数据
 function UserEntity:UnLoad(uid)
 	local rs = self.recordset[uid]
 	if rs then
-		for k, v in pairs(rs) do
-			rs[k] = nil
+		if self.dbNode[uid] then
+			--同步到dbNode
+			RpcSend(self.dbNode[uid], REMOTE_DB_SERVICE, REMOTE_SEND, self.tbname, "UnLoad", uid, self.recordset[uid])
+		else
+			--设置redis的内容60分钟后失效
+			RedisExcute(string.format("expire %s:%d %d",self.tbname, uid, REDIS_EXPIRE_INTERVAL))
 		end
+
 		self.recordset[uid] = nil
-
-		--设置redis的内容60分钟后失效,to do
-
+		self.dbNode[uid] = nil
 	end
 end
 
--- row中包含self.pkfield字段（如果表主键是self.pkfield字段，不需要包含）,row为k,v形式table
--- 内存中不存在，则添加，并同步到redis
-function UserEntity:Add(row, nosync)
-	if row[self.key] and self.recordset[row[self.key]] then
-		LOG_ERROR("Add UserEntity error,had exists,%s",tostring(row))
-		return false -- 记录已经存在，返回
-	end		
-
-	local id = row[self.key]
-	if not id or id == 0 then
-		id = self:GetNextId()
-		row[self.key] = id
+-- row中包含self.indexkey字段（如果表主键是self.indexkey字段,不需要包含）,row为k,v形式table
+function UserEntity:Add( row, dbNode )
+	local uid = assert(row[self.indexkey])
+	if uid and self.recordset[uid] then
+		LOG_ERROR("Add UserEntity Error,Exists,%s",tostring(row))
+		return false --记录已经存在，返回
 	end
 
-	local ret = EntityImpl:AddUser(self.tbname, row)
-	if ret then
-		row[self.key] = id
-		self.recordset[row[self.key]] = row
+	if uid and dbNode then
+		--同步到dbNode
+		local ret,id,data = RpcCall(self.dbNode[uid], REMOTE_DB_SERVICE, REMOTE_CALL, self.tbname, "Add", row)
+		self.recordset[uid] = data
+		self.dbNode[uid] = dbNode
+	else
+		
+		local id = self:GetNextId()
+		local ret = EntityImpl:AddUser(self.tbname, id, row)
+		if ret then
+			row[self.key] = id
+			self.recordset[uid] = row
+		end
+		return ret,id,row
 	end
-
-	return ret
+	
 end
 
--- row中包含[self.key]字段,row为k,v形式table
--- 从内存中删除，并同步到redis
-function UserEntity:Delete(row, nosync)
-	if not row[self.key] then
-		LOG_ERROR("Delete UserEntity,row not [%s] field,%s",self.key,tostring(row))
+-- row中包含[self.indexkey]字段,row为k,v形式table
+function UserEntity:Delete( row )
+	local uid = row[self.indexkey]
+	if not uid then
+		LOG_ERROR("Delete UserEntity,row not [%s] field,%s",self.indexkey,tostring(row))
 		return
 	end
 	
-	local ret = EntityImpl:DelUser(self.tbname, row)
-	if ret then 
-		self.recordset[row[self.key]] = nil
+	local ret
+	if self.dbNode[uid] then
+		ret = RpcSend( self.dbNode[uid], REMOTE_DB_SERVICE, REMOTE_SEND, self.tbname, "Delete", row)
+	else
+		ret = EntityImpl:DelUser(self.tbname, row)
 	end
 
+	if ret then 
+		self.recordset[uid] = nil
+	end
 	return ret
 end
 
--- row中包含[self.key]字段,row为k,v形式table
--- 仅从内存中移除，但不同步到redis
-function UserEntity:Remove(row)
-	if not row[self.key] or not self.recordset[row[self.key]] then
-		LOG_ERROR("Remove UserEntity,not exists,%s",tostring(row))
-		return 
-	end		-- 记录不存在，返回
-	self.recordset[row[self.key]] = nil
 
-	return true
-end
-
--- row中包含[self.key]字段,row为k,v形式table
-function UserEntity:Update(row, nosync)
-
+-- row中包含[self.indexkey]字段,row为k,v形式table
+function UserEntity:Update(row, remoteNode)
 	local update_local = true
-	if not row[self.key] then
-		assert(false,self.key.." not exists")
+	local uid = row[self.indexkey]
+	if not uid then
+		assert(false,self.indexkey.." Not Exists")
 	end
-	if not self.recordset[row[self.key]] then
+	if not self.recordset[uid] then
 		update_local = false
 	end		-- 记录不存在，离线玩家，不需要更新内存
 
-	local ret = EntityImpl:UpdateUser(self.tbname, row)
+	local ret
+	if not update_local or self.dbNode[uid] then
+		local remoteNode = update_local and remoteNode or self.dbNode[uid]
+		ret = RpcCall( remoteNode, REMOTE_DB_SERVICE, REMOTE_CALL, self.tbname, "Update", row)
+	else
+		ret = EntityImpl:UpdateUser(self.tbname, row)
+	end
+
 	if ret and update_local then
 		for k, v in pairs(row) do
-			if self.recordset[row[self.key]] then
-				self.recordset[row[self.key]][k] = v
+			if self.recordset[uid] then
+				self.recordset[uid][k] = v
 			end
 		end
 	end
-
 	return ret
 end
 
 function UserEntity:Get(uid, field)
-	-- 内存中存在
 	local record
-
 	if self.recordset[uid] then
 		if type(field) == "string" then
 			record = self.recordset[uid][field]
@@ -147,21 +145,24 @@ function UserEntity:Get(uid, field)
 		return record
 	end
 
+	--memory not exist
 	record = EntityImpl:LoadUser(self.tbname, uid)
-
-	if type(field) == "string" then
-		return record[orifield]
-	elseif type(field) == "table" then
-		local ret = {}
-		for _,v in pairs(field) do
-			ret[v] = record[v]
+	if record then
+		if type(field) == "string" then
+			return record[field]
+		elseif type(field) == "table" then
+			local ret = {}
+			for _,v in pairs(field) do
+				ret[v] = record[v]
+			end
+			return ret
+		else
+			return record[uid]
 		end
-		return ret
 	end
 end
 
 -- field为字符串表示获取单个字段的值
--- field为一个数组形式table，表示获取数组中指定的字段的值，返回k,v形式table
 function UserEntity:GetValue(uid, field)
 	if not field then return end
 	local record = self:Get(uid, field)
@@ -171,10 +172,6 @@ function UserEntity:GetValue(uid, field)
 end
 
 -- 成功返回true，失败返回false或nil
--- 设置单个字段的值，field为字符串，value为值
--- 设置多个字段的值，field为k,v形式table，
-
--- 设置单个字段的值，field为string，data为值，设置多个字段的值,field为key,value形式table,value为空
 function UserEntity:SetValue(uid, field, value)
 	local record = {}
 	record[self.pkfield] = uid

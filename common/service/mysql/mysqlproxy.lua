@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-20 15:53:38
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-18 17:58:55
+-- @Last Modified time: 2017-05-25 15:06:14
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -11,7 +11,7 @@ local mysqlAgentSvrs = {}
 local mysqlAgentNum
 
 local function initMysqlAgent( ... )
-	mysqlAgentNum = skynet.getenv("dbagent_num") or 10
+	mysqlAgentNum = skynet.getenv("dbagentnum") or 10
 
 	for i=1,mysqlAgentNum do
 		table.insert(mysqlAgentSvrs,assert(snax.newservice("mysqlagent")))

@@ -8,6 +8,7 @@ export DB_WORK_THREAD=8
 export DB_DAEMON=0
 
 #cluster配置
+export MONITOR_NODE_NAME="monitor"
 export DB_CLUSTER_NODE="db"
 export DB_CLUSTER_IP="127.0.0.1"
 export DB_CLUSTER_PORT="7003"
@@ -18,8 +19,8 @@ export DB_WEB_PORT=8001
 #skynet DEBUG端口(telnet),0为不开启
 export DB_DEBUG_PORT=0
 
-#时区
-export DB_TIMEZONE=8
+#时区偏移
+export DB_TIMEDIFF=8
 
 #服务器ID
 export DB_SERVER_ID=0
