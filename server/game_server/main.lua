@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-09 14:43:27
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-25 16:36:23
+-- @Last Modified time: 2017-05-31 10:25:31
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -39,11 +39,6 @@ skynet.start(function ( ... )
 	--init cluster node
 	SM.monitor_subscribe.req.connectMonitorAndPush(selfNodeName)
 	cluster.open(selfNodeName)
-
-	--test
-	SM.user.req.Load(1,"db")
-	local ret = SM.user.req.Get(1,"power")
-	print(ret)
 
 	skynet.exit()
 end)

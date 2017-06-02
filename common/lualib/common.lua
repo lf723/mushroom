@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-05-18 11:18:27
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-27 18:00:37
+-- @Last Modified time: 2017-06-01 17:10:37
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -96,4 +96,26 @@ function GetTableValueByIndex( tb, index )
 
 		i = i + 1
 	end
+end
+
+function GetClusterNodeByName( name, fuzzy )
+	local clusterInfo = SM.rpc.req.GetClusterCfg()
+	local ret
+	if clusterInfo then
+		for nodeName,_ in pairs(clusterInfo) do
+			if fuzzy then
+				if nodeName:find(name) ~= nil then
+					if not ret then ret = {} end
+					table.insert(ret, nodeName)
+				end
+			else
+				if nodeName == name then
+					ret = nodeName
+					break
+				end
+			end
+		end
+	end
+
+	return ret
 end

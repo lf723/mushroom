@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2015-06-17 09:49:05
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-27 18:03:51
+-- @Last Modified time: 2017-05-31 10:06:29
 local skynet = require "skynet"
 require "Entity"
 local EntityImpl = require "EntityImpl"
@@ -157,7 +157,7 @@ function UserEntity:Get(uid, field)
 			end
 			return ret
 		else
-			return record[uid]
+			return record
 		end
 	end
 end
