@@ -5,6 +5,15 @@ chmod +x ${prefix}redis-server
 
 #停止redis-server
 pkill redis-server
+echo "wait redis-server exit..."
+while true
+do
+	ps=`ps -ef | grep redis-server | grep -v grep | wc -l`
+	if [ $ps -eq '0' ]; then
+		break
+	fi
+	usleep 1
+done
 
 #定义初始端口
 initport=6379

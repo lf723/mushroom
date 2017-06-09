@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2015-06-17 09:49:05
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-23 15:16:18
+-- @Last Modified time: 2017-06-06 13:51:24
 local skynet = require "skynet"
 local EntityImpl = require "EntityImpl"
 require "Entity"
@@ -22,7 +22,7 @@ function ConfigEntity:Init()
 end
 
 function ConfigEntity:Load()
-	local rs = EntityImpl.LoadConfig(self.tbname)
+	local rs = EntityImpl:LoadConfig(self.tbname)
 	if rs then
 		self.recordset = rs
 	end

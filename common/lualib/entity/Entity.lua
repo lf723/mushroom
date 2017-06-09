@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2015-06-17 09:49:05
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-27 17:53:00
+-- @Last Modified time: 2017-06-07 11:30:43
 local skynet = require "skynet"
 
 -- 定义Entity类型
@@ -17,11 +17,9 @@ end
 
 -- 获取redis下一个编号
 function Entity:GetNextId()
-	local id = RedisExcute(string.format("incr %s:%s", self.tbname, self.key ))
-	if id == 1 then
-		id = tonumber(skynet.getenv("serverid")) * 10000000
-		RedisExcute( string.format("set %s:%s %d", self.tbname , self.key, id))
-	end
+	local id = RedisExecute(string.format("incr %s:%s", self.tbname, self.key ))
+	if id == 0 then id = 1 end
+	RedisExecute( string.format("set %s:%s %d", self.tbname , self.key, id))
 	return id
 end
 

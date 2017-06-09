@@ -32,14 +32,13 @@ Protocol:
 
 	Client -> Server : Request
 		word size (Not include self)
-		string content (size-4)
-		dword session
+		protobuf
+		session
 
 	Server -> Client : Response
 		word size (Not include self)
-		string content (size-5)
-		byte ok (1 is ok, 0 is error)
-		dword session
+		protobuf 
+		session
 
 API:
 	server.userid(username)
@@ -187,6 +186,10 @@ function server.start(conf)
 		u.fd = fd
 		u.ip = addr
 		connection[fd] = u
+
+		if conf.auth_handler then
+			conf.auth_handler( username, fd )
+		end
 	end
 
 	local function auth(fd, addr, msg, sz)
@@ -261,12 +264,12 @@ function server.start(conf)
 			result = result or ""
 			if not ok then
 				skynet.error(result)
-				result = string.pack(">BI4", 0, session)
-			else
-				result = result .. string.pack(">BI4", 1, session)
+				p[2] = nil
+			elseif result:len() > 0 then
+				result = result .. string.pack(">I4", session)
+				p[2] = string.pack(">s2",result)
 			end
 
-			p[2] = string.pack(">s2",result)
 			p[3] = u.version
 			p[4] = u.index
 		else
@@ -283,7 +286,7 @@ function server.start(conf)
 		u.index = u.index + 1
 		-- the return fd is p[1] (fd may change by multi request) check connect
 		fd = p[1]
-		if connection[fd] then
+		if connection[fd] and p[2] then
 			socketdriver.send(fd, p[2])
 		end
 		p[1] = nil

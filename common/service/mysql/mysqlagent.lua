@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-20 15:53:48
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-18 17:54:01
+-- @Last Modified time: 2017-06-07 11:02:26
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -12,7 +12,8 @@ local mysqlClient
 
 function init( ... )
 	local function on_connect(db)
-		db:query("set charset utf8");
+		db:query("set charset utf8")
+		db:query("set sql_mode = 'STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION'")
 	end
 	
 	local opts = {

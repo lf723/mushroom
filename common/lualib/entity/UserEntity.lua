@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2015-06-17 09:49:05
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-31 10:06:29
+-- @Last Modified time: 2017-06-08 13:51:40
 local skynet = require "skynet"
 require "Entity"
 local EntityImpl = require "EntityImpl"
@@ -14,6 +14,11 @@ end
 
 function UserEntity:Init()
 	self.dbNode = {} --当存在dbNode时,不直接从redis or db读取数据,而是从相应的dbNode节点获取
+	local ret = assert(EntityImpl:GetEntityCfg( TB_USER, self.tbname ))
+	self.key = ret.key
+	self.indexkey = ret.indexkey
+	self.value = ret.value
+	self.updateflag = {}
 end
 
 function UserEntity:dtor()
@@ -29,21 +34,24 @@ function UserEntity:Load(uid, dbNode)
 		local row = EntityImpl:LoadUser(self.tbname, uid, dbNode)
 		if row and not table.empty(row) then
 			self.recordset[uid] = row
-			self.dbNode[uid] = dbNode
 		end
+		self.dbNode[uid] = dbNode
 	end
+
+	if not dbNode and self.recordset[uid] then return self.recordset[uid] end
 end
 
 -- 卸载玩家数据
-function UserEntity:UnLoad(uid)
+function UserEntity:UnLoad(uid, row)
 	local rs = self.recordset[uid]
 	if rs then
-		if self.dbNode[uid] then
+		if self.dbNode[uid] and self.updateflag[uid] then
 			--同步到dbNode
-			RpcSend(self.dbNode[uid], REMOTE_DB_SERVICE, REMOTE_SEND, self.tbname, "UnLoad", uid, self.recordset[uid])
+			RpcSend(self.dbNode[uid], REMOTE_SERVICE, REMOTE_SEND, self.tbname, "UnLoad", uid, self.recordset[uid])
 		else
+			if row then self:Update( row ) end --先更新
 			--设置redis的内容60分钟后失效
-			RedisExcute(string.format("expire %s:%d %d",self.tbname, uid, REDIS_EXPIRE_INTERVAL))
+			RedisExecute(string.format("expire %s:%d %d",self.tbname, uid, REDIS_EXPIRE_INTERVAL))
 		end
 
 		self.recordset[uid] = nil
@@ -61,11 +69,10 @@ function UserEntity:Add( row, dbNode )
 
 	if uid and dbNode then
 		--同步到dbNode
-		local ret,id,data = RpcCall(self.dbNode[uid], REMOTE_DB_SERVICE, REMOTE_CALL, self.tbname, "Add", row)
+		local ret,id,data = RpcCall(dbNode, REMOTE_SERVICE, REMOTE_CALL, self.tbname, "Add", row)
 		self.recordset[uid] = data
 		self.dbNode[uid] = dbNode
 	else
-		
 		local id = self:GetNextId()
 		local ret = EntityImpl:AddUser(self.tbname, id, row)
 		if ret then
@@ -87,7 +94,7 @@ function UserEntity:Delete( row )
 	
 	local ret
 	if self.dbNode[uid] then
-		ret = RpcSend( self.dbNode[uid], REMOTE_DB_SERVICE, REMOTE_SEND, self.tbname, "Delete", row)
+		ret = RpcSend( self.dbNode[uid], REMOTE_SERVICE, REMOTE_SEND, self.tbname, "Delete", row)
 	else
 		ret = EntityImpl:DelUser(self.tbname, row)
 	end
@@ -100,30 +107,36 @@ end
 
 
 -- row中包含[self.indexkey]字段,row为k,v形式table
-function UserEntity:Update(row, remoteNode)
-	local update_local = true
+function UserEntity:Update( row, nosync )
+
+	local updateOffline = false
 	local uid = row[self.indexkey]
 	if not uid then
 		assert(false,self.indexkey.." Not Exists")
 	end
 	if not self.recordset[uid] then
-		update_local = false
-	end		-- 记录不存在，离线玩家，不需要更新内存
-
-	local ret
-	if not update_local or self.dbNode[uid] then
-		local remoteNode = update_local and remoteNode or self.dbNode[uid]
-		ret = RpcCall( remoteNode, REMOTE_DB_SERVICE, REMOTE_CALL, self.tbname, "Update", row)
-	else
-		ret = EntityImpl:UpdateUser(self.tbname, row)
+		updateOffline = true
 	end
 
-	if ret and update_local then
+	local ret = true
+	if updateOffline and not nosync then --离线玩家数据更新到DB
+		local _centerserver = GetClusterNodeByName("center")
+		local dbserver = RpcCall( _centerserver, "route", "GetUserSvr", uid)
+		assert(dbserver, "UserEntity:Update Offline User Info, uid not exist:" .. uid)
+		ret = RpcCall( dbserver, REMOTE_SERVICE, REMOTE_CALL, self.tbname, "Update", row, true)
+	else
+		if not self.dbNode[uid] then
+			ret = EntityImpl:UpdateUser(self.tbname, row)
+		end
+	end
+
+	if ret and not updateOffline then
 		for k, v in pairs(row) do
 			if self.recordset[uid] then
 				self.recordset[uid][k] = v
 			end
 		end
+		self.updateflag[uid] = true
 	end
 	return ret
 end
@@ -146,7 +159,7 @@ function UserEntity:Get(uid, field)
 	end
 
 	--memory not exist
-	record = EntityImpl:LoadUser(self.tbname, uid)
+	record = EntityImpl:LoadUser( self.tbname, uid, self.dbNode[uid] )
 	if record then
 		if type(field) == "string" then
 			return record[field]
@@ -174,7 +187,7 @@ end
 -- 成功返回true，失败返回false或nil
 function UserEntity:SetValue(uid, field, value)
 	local record = {}
-	record[self.pkfield] = uid
+	record[self.indexkey] = uid
 	if value then
 		record[field] = value
 	else

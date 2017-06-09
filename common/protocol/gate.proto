@@ -1,0 +1,43 @@
+package gate;
+
+message Header {
+	//玩家的uid
+	optional int32 uid = 1;
+	//客户端设备类型
+	optional int32 device_type = 2;
+	//客户端版本号
+	optional string client_version = 3;
+}
+
+message ErrorMessage {
+	//错误编号
+	optional int32 errno = 1 [default = 0];
+	//错误描述
+	optional string msg = 2;
+}
+
+enum CMD {
+	user_UserInfoRequest		= 1000; //获取玩家信息			user.proto 				UserInfoRequest
+	user_UserInfoResponse		= 1001; //						user.proto 				UserInfoResponse
+}
+
+//网络封包消息
+//Client->Server,Server->Client
+message GateMessage {
+
+	message MessageContent {
+		//协议命令ID
+		optional CMD cmd = 1; 
+		//proto buffer的名字
+		optional string proto_name = 2; 
+		//序列化后的protobuf的内容
+		optional bytes network_message = 3; 
+		//错误信息
+        optional ErrorMessage error_message = 4; 
+	}
+
+	//Header消息
+	optional Header head = 1;
+	//消息内容
+	optional MessageContent content = 2;
+}

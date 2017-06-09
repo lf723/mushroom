@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-07 17:08:20
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-25 11:28:04
+-- @Last Modified time: 2017-06-08 10:36:23
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -13,14 +13,55 @@ local cluster = require "cluster"
 
 local clusterInfo = {}
 local thisNodeName
+local heartError = {}
+
+local function ClusterHold( ... )
+	local CheckStr = "check"
+	while true do
+		skynet.sleep(3 * 100)
+		local sync = false
+		for node,info in pairs(clusterInfo) do
+			if node ~= thisNodeName then
+				if RpcCall( node, "monitor_subscribe", "Heart", CheckStr) ~= CheckStr then
+					if not heartError[node] then 
+						heartError[node] = 1 
+					else 
+						clusterInfo[node] = nil
+						heartError[node] = nil
+						sync = true
+					end
+				end
+			end
+		end
+
+		if sync then
+			SM.rpc.req.updateClusterName(clusterInfo)
+			for node,info in pairs(clusterInfo) do
+				RpcCall(node,"monitor_subscribe", "syncClusterInfo", clusterInfo)
+			end
+		end
+	end
+end
+
 function init( selfNodeName )
 	snax.enablecluster()
 	if selfNodeName then
 		thisNodeName = selfNodeName
 		-- init self cluster info
-		clusterInfo[selfNodeName] = { ip = skynet.getenv("clusterip"), port = tonumber(skynet.getenv("clusterport"))}
+		local ip = skynet.getenv("clusterip")
+		local port = skynet.getenv("clusterport")
+		clusterInfo[selfNodeName] = { ip = ip, port = tonumber(port)}
+
+		--init clustername.lua
+		local f = io.open("etc/clustername.lua","w+")
+		f:write(thisNodeName.. "=" .. ip .. ":" .. port)
+		f:flush()
+		f:close()
+
 		SM.rpc.req.updateClusterName(clusterInfo)
 	end
+
+	skynet.fork(ClusterHold)
 end
 
 function exit( ... )
@@ -45,4 +86,8 @@ function response.sync( remoteName, remoteIp, remotePort )
 
 	--return cluster info to remoteName node
 	return clusterInfo
+end
+
+function response.Heart( ... )
+	return ...
 end

@@ -2,7 +2,7 @@
 * @Author: linfeng
 * @Date:   2017-01-04 10:05:59
 * @Last Modified by:   linfeng
-* @Last Modified time: 2017-05-25 11:33:21
+* @Last Modified time: 2017-06-07 17:49:51
 */
 
 #include <unistd.h>
@@ -38,9 +38,9 @@ void ShowUsage()
 					"-g\tstart game server,default use etc/start_game.sh\n"
 					"-b\tstart battle server,default use etc/start_battle.sh\n"
 					"-m\tstart monitor server,default use etc/start_monitor.sh\n"
-					"-w\tstart world server,default use etc/start_world.sh\n"
 					"-r\tstart redis server,default use etc/start_redis.sh\n"
 					"-d\tstart db server,default use etc/start_db.sh\n"
+					"-c\tstart center server,default use etc/start_center.sh\n"
 					"-s\t[name]\tstop server by name\n");
 }
 
@@ -89,7 +89,7 @@ int main(int argc, char* argv[])
 		ShowUsage();
 
 	bool boot_login = false,boot_game = false,boot_battle = false, stop_server = false;
-	bool boot_monitor = false, boot_center = false, boot_db = false, boot_world = false, boot_redis = false;
+	bool boot_monitor = false, boot_center = false, boot_db = false, boot_redis = false;
 	char process_name[128] = {0};
 	int opt;
 	while((opt = getopt(argc,argv,"lgbms:cdwhr")) != -1)
@@ -117,9 +117,6 @@ int main(int argc, char* argv[])
 			case 'd':
 				boot_db = true;
 				break;
-			case 'w':
-				boot_world = true;
-				break;
 			case 's':
 				stop_server = true;
 				strncpy(process_name,optarg,sizeof(process_name));
@@ -134,14 +131,14 @@ int main(int argc, char* argv[])
 	}
 
 	if(!stop_server && !boot_login && !boot_game && !boot_battle 
-		&& !boot_monitor && !boot_center && !boot_db && !boot_world
-		&& !boot_redis)
+		&& !boot_monitor && !boot_center && !boot_db && !boot_redis)
 		ShowUsage();
 
-	if(boot_redis)
-		boot_server("redis", "etc/start_redis.sh");
+	
 	if(stop_server)
 		kill_server(process_name);
+	if(boot_redis)
+		boot_server("redis", "etc/start_redis.sh");
 	if(boot_login)
 		boot_server("login", "etc/start_login.sh");
 	if(boot_game)
@@ -154,8 +151,6 @@ int main(int argc, char* argv[])
 		boot_server("center", "etc/start_center.sh");
 	if(boot_db)
 		boot_server("db", "etc/start_db.sh");
-	if(boot_world)
-		boot_server("world", "etc/start_world.sh");
 	
     return 0;
 }

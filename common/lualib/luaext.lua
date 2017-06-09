@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2015-09-18 15:53:40
--- @Last Modified by:   zhouyan
--- @Last Modified time: 2015-10-27 15:59:34
+-- @Last Modified by:   linfeng
+-- @Last Modified time: 2017-06-07 11:13:18
 -- lua扩展
 
 -- table扩展
@@ -49,6 +49,15 @@ table.valuestring = function( t, delim )
     end
 
     return result
+end
+
+table.kv = function ( t, delim )
+    local result = ""
+    for k,v in pairs(t) do
+        result = result .. delim .. k .. delim .. v
+    end
+
+    return string.trim(result)
 end
 
 -- 浅拷贝

@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-06 17:45:14
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-02-23 10:41:22
+-- @Last Modified time: 2017-06-08 13:56:05
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -38,7 +38,7 @@ end
 -- param : timerid, timer session id
 -- return : true/false
 local function CheckSession( timerid )
-	return TimerSession[TimerId]
+	return TimerSession[timerid]
 end
 
 -- brief : 回收一个timer session id

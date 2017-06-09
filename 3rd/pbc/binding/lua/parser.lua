@@ -247,19 +247,6 @@ local function _match_name(namespace , n , all)
 end
 
 local function _fix_field(namespace , field, all)
-	local type_name = field.type_name
-	if type_name == "" then
-		field.type_name = nil
-		return
-	elseif type_name == nil then
-		return
-	end
-
-	local full_name = assert(_match_name(namespace, field.type_name, all) , field.type_name , all)
-
-	field.type_name = full_name
-	field.type = all[full_name]
-
 	local options = field.options
 	if options then
 		if options.default then
@@ -270,6 +257,18 @@ local function _fix_field(namespace , field, all)
 			field.options = nil
 		end
 	end
+
+	local type_name = field.type_name
+	if type_name == "" then
+		field.type_name = nil
+		return
+	elseif type_name == nil then
+		return
+	end
+
+	local full_name = assert(_match_name(namespace, field.type_name, all) , field.type_name , all)
+	field.type_name = full_name
+	field.type = all[full_name]
 end
 
 local function _fix_extension(namespace, ext, all)
@@ -377,20 +376,24 @@ function parser.register(fileset , path)
 		local buffer = f:read "*a"
 		f:close()
 		local t = parser_one(buffer,filename)
+		
 		_gen_fullname(t,all)
 		t.name = filename
 		tinsert(files , t)
 	end
+
 	for _,file in ipairs(files) do
 		_fix_typename(file,all)
 	end
-
+	
 	local pbencode = pb.encode("google.protobuf.FileDescriptorSet" , { file = files })
 
 	if pbencode == nil then
 		error(pb.lasterror())
 	end
+
 	pb.register(pbencode)
+
 	return files
 end
 

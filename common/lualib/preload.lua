@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-06 17:39:27
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-25 15:44:42
+-- @Last Modified time: 2017-06-06 13:48:21
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -32,7 +32,7 @@ LOG_PATH = skynet.getenv("logpath")
 EVENT_LOG_PATH = skynet.getenv("eventlogpath")
 
 --使用的数据库
-G_DBTYPE = skynet.getenv("dbtype")
+G_DBTYPE = skynet.getenv("dbtype") or DBTYPE_MYSQL
 
 --时区偏移
 local timediff = skynet.getenv("timediff") or 0

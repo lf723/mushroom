@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-09 15:13:21
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-25 15:48:35
+-- @Last Modified time: 2017-06-08 13:41:29
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -22,11 +22,14 @@ function exit( ... )
 	if redisInstance then redisInstance:disconnect() end
 end
 
-function response.Do( cmd, pipeline, resp )
+function response.Do( cmd, pipeline )
 	local ret
 	if pipeline then
-		assert(type(pipeline) == "table")
-		ret = redisInstance:pipeline( cmd )
+		assert(type(cmd) == "table", tostring(cmd))
+		for k,v in pairs(cmd) do
+			cmd[k] = string.split(v, " ")
+		end
+		ret = redisInstance:pipeline( cmd, {} ) --offer a {} for result
 	else
 		local args = string.split(cmd," ")
 		local redisCmd = args[1]

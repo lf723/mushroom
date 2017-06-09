@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-01-19 15:25:15
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-25 15:55:42
+-- @Last Modified time: 2017-06-08 10:08:24
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -13,6 +13,7 @@ require "dbcfg"
 local function initLogicLuaService( selfNodeName )
 	--init entity config to sharedata
 	EntityImpl:SetEntityCfg(ConfigEntityCfg, CommonEntityCfg, UserEntityCfg)
+	EntityImpl:RecordMaxIdToRedis()
 end
 
 skynet.start(function ( ... )

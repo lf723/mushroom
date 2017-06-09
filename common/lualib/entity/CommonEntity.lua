@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2015-07-01 15:42:49
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-23 15:16:17
+-- @Last Modified time: 2017-06-06 17:50:41
 local skynet = require "skynet"
 local snax = require "snax"
 require "Entity"
@@ -37,7 +37,7 @@ end
 
 -- row中包含pk字段,row为k,v形式table
 -- 内存中不存在，则添加，并同步到redis
-function CommonEntity:Add(row, nosync)
+function CommonEntity:Add(row)
 	if row.id and self.recordset[row.id] then return end		-- 记录已经存在，返回
 	local id = row[self.pkfield]
 	if not id or id == 0 then
@@ -57,7 +57,7 @@ end
 
 -- row中包含pk字段,row为k,v形式table
 -- 从内存中删除，并同步到redis
-function CommonEntity:Delete(row, nosync)
+function CommonEntity:Delete(row)
 	local id = row[self.pkfield]
 	if not self.recordset[id] then return end		-- 记录不存在，返回
 	local ret = EntityImpl:DelCommon(self.tbname, row)
@@ -71,7 +71,7 @@ function CommonEntity:Delete(row, nosync)
 end
 
 -- row中包含pk字段,row为k,v形式table
-function CommonEntity:Update(row, nosync)
+function CommonEntity:Update(row)
 	local id = row[self.pkfield]
 	if not self.recordset[id] then return end		-- 记录不存在，返回
 	local ret = EntityImpl:UpdateCommon(self.tbname, row)

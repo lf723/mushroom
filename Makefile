@@ -14,7 +14,7 @@ PREFIX ?= bin
 LUA_INC_PATH ?= 3rd/skynet/3rd/lua
 CFLAGS = -g -O2 -Wall -std=gnu99 -lrt
 
-BIN = $(LUA_CLIB_PATH)/log.so $(LUA_CLIB_PATH)/cjson.so start StressTest skynet
+BIN = $(LUA_CLIB_PATH)/log.so $(LUA_CLIB_PATH)/cjson.so $(LUA_CLIB_PATH)/protobuf.so start StressTest skynet 
 
 all : skynet
 
@@ -33,11 +33,11 @@ $(LUA_CLIB_PATH) :
 $(LUA_CLIB_PATH)/log.so : common/luaclib_src/lua-log.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -I./3rd/skynet/3rd/lua $^ -o $@
 
-cjson/Makefile :
-	git submodule update --init
+$(LUA_CLIB_PATH)/cjson.so : $(LUA_CLIB_PATH)
+	cd 3rd/lua-cjson && $(MAKE)
 
-$(LUA_CLIB_PATH)/cjson.so : cjson/Makefile | $(LUA_CLIB_PATH)
-	cd 3rd/lua-cjson && $(MAKE) && cp cjson.so ../../common/luaclib/ && cd -
+$(LUA_CLIB_PATH)/protobuf.so : $(LUA_CLIB_PATH)
+	cd 3rd/pbc/binding/lua53 && $(MAKE)
 
 start : common/luaclib_src/start.c
 	$(CC) $(CFLAGS) $^ -o $@
@@ -55,6 +55,10 @@ install : all | $(PREFIX)
 	cp -r 3rd/skynet/lualib $(PREFIX)/3rd/skynet/
 	cp -r 3rd/skynet/service $(PREFIX)/3rd/skynet/
 	cp -r 3rd/skynet/cservice $(PREFIX)/3rd/skynet/
+	cp -r 3rd/lua-cjson/cjson.so $(PREFIX)/3rd/lua-cjson/cjson.so
+	cp -r 3rd/pbc/binding/lua53/protobuf.so $(PREFIX)/3rd/pbc/binding/lua53/protobuf.so
+	cp -r 3rd/pbc/binding/lua53/protobuf.lua $(PREFIX)/3rd/pbc/binding/lua53/protobuf.lua
+	cp -r 3rd/pbc/binding/lua/protobuf.lua $(PREFIX)/3rd/pbc/binding/lua53/parser.lua
 	cp start $(PREFIX)/
 	cp StressTest $(PREFIX)/
 	cp -r server $(PREFIX)
@@ -64,6 +68,8 @@ $(PREFIX) :
 	mkdir $(PREFIX)/common
 	mkdir $(PREFIX)/server
 	mkdir -p $(PREFIX)/3rd/skynet
+	mkdir -p $(PREFIX)/3rd/lua-cjson
+	mkdir -p $(PREFIX)/3rd/pbc/binding/lua53
 
 clean :
 	rm -rf $(LUA_CLIB_PATH)/*

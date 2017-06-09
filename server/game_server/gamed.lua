@@ -1,8 +1,8 @@
-local msgserver = require "msggate"
+local msgserver = require "gamegate"
 local crypt = require "crypt"
 local skynet = require "skynet"
 local cluster = require "cluster"
---local loginservice = tonumber(...)
+local snax = require "snax"
 
 local server = {}
 local users = {}
@@ -17,16 +17,16 @@ local connectPort = skynet.getenv("port")
 local function allocAgent( ... )
 	maxAgent = assert(tonumber(skynet.getenv("maxclient"))) // 100 --100 client per agent, auto branche
 	for i=1,maxAgent do
-		table.insert(agents, assert(skynet.newservice("agent")))
+		table.insert(agents, assert(snax.newservice("agent")))
 	end
 end
 
 -- login server disallow multi login, so login_handler never be reentry
 -- call by login server
-function server.login_handler(uid, secret, lserver)
-
+function server.login_handler(uid, secret, lserver, dserver, newUser)
 	if users[uid] then
-		error(string.format("%s is already login", uid))
+		--kick
+		server.kick_handler( uid, users[uid].subid)
 	end
 
 	internal_id = internal_id + 1
@@ -40,10 +40,11 @@ function server.login_handler(uid, secret, lserver)
 		uid = uid,
 		subid = subid,
 		lserver = lserver,
+		dserver = dserver,
 	}
 
 	-- trash subid (no used)
-	skynet.call(agent, "lua", "login", uid, subid, secret)
+	agent.req.login( skynet.self(), uid, subid, secret, u.dserver, newUser)
 
 	users[uid] = u
 	username_map[username] = u
@@ -74,7 +75,16 @@ function server.kick_handler(uid, subid)
 		local username = msgserver.username(uid, subid, servername)
 		assert(u.username == username)
 		-- NOTICE: logout may call skynet.exit, so you should use pcall.
-		pcall(skynet.call, u.agent, "lua", "logout", u.uid)
+		pcall(u.agent.req.logout, skynet.self(), u.uid)
+	end
+end
+
+-- call by self (when recv first auth)
+function server.auth_handler( username, fd )
+	local uid = msgserver.userid(username)
+	local u = users[tonumber(uid)]
+	if u then
+		u.agent.req.auth( u.uid, fd )
 	end
 end
 
@@ -82,7 +92,7 @@ end
 function server.disconnect_handler(username)
 	local u = username_map[username]
 	if u then
-		skynet.call(u.agent, "lua", "afk")
+		u.agent.req.afk( skynet.self(),u.uid )
 	end
 end
 

@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-05-31 10:48:03
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-02 10:33:33
+-- @Last Modified time: 2017-06-06 09:32:47
 
 
 local svr =  "../../../common/lualib/?.lua;".."./?.lua;"
@@ -118,6 +118,15 @@ local function make_crypt_token( token )
 	return crypt.base64encode(crypt.desencode(clisecret,token))
 end
 
+local index = 0
+local function make_auth( username )
+	index = index + 1
+	local handshake = string.format("%s:%d",username,index)
+	local encrypt = crypt.hmac64(crypt.hashkey(handshake),clisecret)
+	local hmac = crypt.base64encode(encrypt)
+	return string.format("%s:%s",handshake,hmac)
+end
+
 --#########################################################################################################
 local CMD = {}
 
@@ -151,24 +160,26 @@ function CMD.login( token )
 	-- base64(uid)@base64(server)#base64(subid) base64(connectip)@base64(connectport)
 	local uid, servername, subid, connectip, connectport = username:match "([^@]*)@([^#]*)#(.*) ([^@]*)@(.*)"
 	username = string.split(username," ")[1]
+	connectip = crypt.base64decode(connectip)
+	connectport = crypt.base64decode(connectport)
 	print(string.format("login ok,username %s,ip=%s, port=%s", 
-		username, crypt.base64decode(connectip), crypt.base64decode(connectport)))
+		username,connectip , connectport))
 
 	socket.close(lfd)
-	return username
+	return username,connectip,connectport
 end
 
 function CMD.auth( token, close)
 	assert(token)
 	local login_before = os.time()
-	local username = CMD.login(token)
+	local username,connectip,connectport = CMD.login(token)
 	local login_end = os.time()
 	if username == nil then
 		return
 	end
 	G_USERNAME = username
 	local auth_before = os.time()
-	local gfd = assert(socket.connect(gameip, gameport))
+	local gfd = assert(socket.connect(connectip, tonumber(connectport)))
 	sendpack(gfd,make_auth(username),true)
 	local pack = recvpack(gfd)
 	local ret  = false
@@ -183,7 +194,31 @@ function CMD.auth( token, close)
 	if close == nil then
 		socket.close(gfd)
 	end
-	return gfd,ret,login_end - login_before,auth_end - auth_before
+	return gfd,ret, connectip, tonumber(connectport)
+end
+
+function CMD.reauth( token )
+	assert(token)
+	local _,ret,connectip,connectport = CMD.auth( token, true)
+	if not ret then
+		print("first auth error")
+		return
+	end
+	print("reauth after 10s...")
+	socket.usleep(1000000 * 10)
+
+	local gfd = assert(socket.connect(connectip, tonumber(connectport)))
+	sendpack(gfd,make_auth(G_USERNAME),true)
+	local pack = recvpack(gfd)
+	local ret  = false
+	if pack:find("200") then
+		ret = true
+		print("auth ok")
+	else
+		print("auth fail:"..pack)
+	end
+
+	socket.close(gfd)
 end
 
 function CMD.help(  )
