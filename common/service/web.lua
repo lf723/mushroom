@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2015-09-17 14:21:53
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-02-07 15:08:40
+-- @Last Modified time: 2017-06-16 17:56:33
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -17,13 +17,18 @@ local string = string
 --------------------------------------------------WebCmd----------------------------------------
 local WebCmd = {}
 
-function WebCmd.abort( args )
+function WebCmd.abort( ... )
 	--save char data to db
 
 	--log exit
 
 	--skynet exit
 	skynet.abort()
+end
+
+function WebCmd.info( ... )
+	--query instance's all service info
+	return skynet.call(".launcher", "lua", "STAT")
 end
 
 ------------------------------------------------------------------------------------------------

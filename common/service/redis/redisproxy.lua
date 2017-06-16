@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-09 15:12:54
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-05-25 15:16:20
+-- @Last Modified time: 2017-06-16 16:40:02
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -44,6 +44,6 @@ end
 -- param : routeIndex,路由的index,如果为nil,则总是路由到第一个实例
 -- return : redisagent server instance,避免单节点设计
 function response.route( routeIndex )
-	local index = (routeIndex or 1) % redisAgentNum
+	local index = (routeIndex or 1) % redisAgentNum + 1
 	return redisAgentSvrs[index].handle, "redisagent"
 end

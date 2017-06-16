@@ -14,7 +14,8 @@ PREFIX ?= bin
 LUA_INC_PATH ?= 3rd/skynet/3rd/lua
 CFLAGS = -g -O2 -Wall -std=gnu99 -lrt
 
-BIN = $(LUA_CLIB_PATH)/log.so $(LUA_CLIB_PATH)/cjson.so $(LUA_CLIB_PATH)/protobuf.so start StressTest skynet 
+BIN = $(LUA_CLIB_PATH)/log.so $(LUA_CLIB_PATH)/cjson.so $(LUA_CLIB_PATH)/protobuf.so start \
+		tool/script/client/StressTest skynet 
 
 all : skynet
 
@@ -42,8 +43,8 @@ $(LUA_CLIB_PATH)/protobuf.so : $(LUA_CLIB_PATH)
 start : common/luaclib_src/start.c
 	$(CC) $(CFLAGS) $^ -o $@
 
-StressTest : common/luaclib_src/StressTest.c
-	$(CC) $(CFLAGS) -I$(LUA_INC_PATH) -L$(LUA_INC_PATH) $^ -o $@ -lpthread -llua -lm -ldl
+tool/script/client/StressTest : common/luaclib_src/StressTest.c
+	$(CC) $(CFLAGS) -Wl,-E -I$(LUA_INC_PATH) -L$(LUA_INC_PATH) $^ -o $@ -llua -lpthread -lm -ldl 
 
 install : all | $(PREFIX)
 	cp -r etc $(PREFIX)
@@ -75,5 +76,5 @@ clean :
 	rm -rf $(LUA_CLIB_PATH)/*
 	rm -rf $(PREFIX)
 	rm -rf start
-	rm -rf StressTest
+	rm -rf tool/script/client/StressTest
 	cd 3rd/skynet && $(MAKE) clean && cd -

@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-07 16:09:00
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-08 13:53:00
+-- @Last Modified time: 2017-06-16 16:59:29
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -179,6 +179,8 @@ function response.push( pushmsg, uid )
 end
 
 function init( ... )
+	CriticalSection = queue()
+	
 	skynet.register_protocol {
 		name = "client",
 		id = skynet.PTYPE_CLIENT,
@@ -191,7 +193,7 @@ function init( ... )
 
 	protocrypt = assert(snax.uniqueservice("protocrypt"))
 
-	CriticalSection = queue()
+	
 end
 
 function exit( ... )

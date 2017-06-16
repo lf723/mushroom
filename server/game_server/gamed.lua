@@ -33,7 +33,7 @@ function server.login_handler(uid, secret, lserver, dserver, newUser)
 	local subid = internal_id	-- don't use internal_id directly
 	local username = msgserver.username(uid, subid, servername)
 
-	local agent = agents[uid % maxAgent]
+	local agent = agents[uid % maxAgent + 1]
 	local u = {
 		username = username,
 		agent = agent,

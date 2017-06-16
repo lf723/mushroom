@@ -1,13 +1,14 @@
 -- @Author: linfeng
 -- @Date:   2017-05-31 10:48:03
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-06 09:32:47
+-- @Last Modified time: 2017-06-16 16:50:26
 
 
 local svr =  "../../../common/lualib/?.lua;".."./?.lua;"
 package.path = "../../../3rd/skynet/lualib/?.lua;../../../3rd/skynet/service/?.lua;"..svr
 package.cpath = "../../../3rd/skynet/luaclib/?.so;../../../common/luaclib/?.so"
 
+local log = require "log.core"
 local socket = require "clientsocket"
 local crypt = require "crypt"
 local string = string
@@ -221,6 +222,16 @@ function CMD.reauth( token )
 	socket.close(gfd)
 end
 
+function CMD.repeatauth( token )
+	print(token)
+	assert(token)
+	local uid = tonumber(token) * 1000000
+	for i=1,100000 do
+		uid = uid + 1
+		CMD.auth(uid)
+	end
+end
+
 function CMD.help(  )
 	local info = 
 [[
@@ -229,6 +240,7 @@ function CMD.help(  )
 	login 		token
 	auth 		token
 	reauth 		token
+	repeatauth 	token
 ]]
 	print(info)
 end
@@ -240,7 +252,9 @@ local function Run( cmd,... )
 	local f = assert(CMD[cmd],cmd)
 	f(...)
 end
+
 local args = {...}
+print(args)
 local t = string.split(table.concat(args," ")," ")
 
 Run(table.unpack(t))
