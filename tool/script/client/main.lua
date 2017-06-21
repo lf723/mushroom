@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-05-31 10:48:03
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-16 16:50:26
+-- @Last Modified time: 2017-06-21 09:30:27
 
 
 local svr =  "../../../common/lualib/?.lua;".."./?.lua;"
@@ -19,6 +19,13 @@ require "luaext"
 local loginip = "127.0.0.1"
 local loginport = 10000
 local loginState = false
+
+
+local rawprint = print
+local print = function ( ... )
+--	rawprint(...)
+end
+
 
 --#######################################################################################################
 
@@ -254,7 +261,6 @@ local function Run( cmd,... )
 end
 
 local args = {...}
-print(args)
 local t = string.split(table.concat(args," ")," ")
 
 Run(table.unpack(t))

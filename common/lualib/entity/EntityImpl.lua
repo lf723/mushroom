@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-05-17 17:14:13
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-16 09:41:35
+-- @Last Modified time: 2017-06-20 16:24:20
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -39,6 +39,8 @@ function EntityImpl:loadConfigMysqlImpl( tbname )
 			ret[tonumber(row[configEntity.key]) or row[configEntity.key]] = decodeRow
 		end
 
+		if #sqlRet < index_limit then break end
+
 		index = index + index_limit
 	end
 	return ret
@@ -70,6 +72,8 @@ function EntityImpl:loadCommonMysqlImpl( tbname )
 			ret[tonumber(row[commonEntity.key])] = decodeRow
 		end
 
+		if #sqlRet < index_limit then break end
+
 		index = index + index_limit
 	end
 	return ret
@@ -83,7 +87,8 @@ function EntityImpl:loadUserRedisImpl( tbname, uid )
 	local cmd = string.format("hgetall %s:%d", tbname, uid)
 	local ret = RedisExecute(cmd)
 	if ret and not table.empty(ret) then
-		return ret --ret is a table
+		--convert to k,v
+		return ConvertIpairToKv(ret)
 	end
 
 	return nil --not user data in redis, or expried, must reload from db(mysql or mongo)
@@ -111,7 +116,6 @@ function EntityImpl:loadUserMysqlImpl( tbname, uid )
 		local redisDecodeRow = TableUnpackToString(decodeRow, true)
 		--set to redis
 		local redisKey = self:MakeRedisKey(decodeRow,userEntity.indexkey)
-
 		cmd = string.format("hmset %s:%s %s",userEntity.name,redisKey,redisDecodeRow)
 		RedisExecute(cmd) --default to first redis instance
 
@@ -234,9 +238,10 @@ function EntityImpl:UpdateUserMysql( tbname, dataIndex )
 	--check ret
 	if ret.badresult then
 		LOG_SYS(E_LOG_DB, "UpdateUser err:%s, info:%s",sqlCmd, ret.badresult)
+		return false
 	end
 
-	return ret
+	return true
 end
 
 function EntityImpl:UpdateUserMongo( tbname, dataIndex )

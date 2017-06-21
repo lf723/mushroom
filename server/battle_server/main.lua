@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-09 14:43:27
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-08 10:08:34
+-- @Last Modified time: 2017-06-19 11:14:54
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -14,7 +14,7 @@ end
 
 skynet.start(function ( ... )
 	
-	local selfNodeName = skynet.getenv("clusternode")
+	local selfNodeName = skynet.getenv("clusternode")..skynet.getenv("serverid")
 	--init log
 	snax.uniqueservice("syslog", selfNodeName)
 

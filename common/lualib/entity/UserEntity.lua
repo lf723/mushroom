@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2015-06-17 09:49:05
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-08 13:51:40
+-- @Last Modified time: 2017-06-20 16:37:33
 local skynet = require "skynet"
 require "Entity"
 local EntityImpl = require "EntityImpl"
@@ -12,16 +12,18 @@ function UserEntity:ctor()
 
 end
 
+function UserEntity:dtor()
+	
+end
+
 function UserEntity:Init()
 	self.dbNode = {} --当存在dbNode时,不直接从redis or db读取数据,而是从相应的dbNode节点获取
+	setmetatable(self.dbNode, { __mode = "k"} )
 	local ret = assert(EntityImpl:GetEntityCfg( TB_USER, self.tbname ))
 	self.key = ret.key
 	self.indexkey = ret.indexkey
 	self.value = ret.value
 	self.updateflag = {}
-end
-
-function UserEntity:dtor()
 end
 
 function UserEntity:GetKey(row)
@@ -33,6 +35,7 @@ function UserEntity:Load(uid, dbNode)
 	if not self.recordset[uid] then
 		local row = EntityImpl:LoadUser(self.tbname, uid, dbNode)
 		if row and not table.empty(row) then
+			row[self.key] = nil --移除key
 			self.recordset[uid] = row
 		end
 		self.dbNode[uid] = dbNode
@@ -49,13 +52,17 @@ function UserEntity:UnLoad(uid, row)
 			--同步到dbNode
 			RpcSend(self.dbNode[uid], REMOTE_SERVICE, REMOTE_SEND, self.tbname, "UnLoad", uid, self.recordset[uid])
 		else
-			if row then self:Update( row ) end --先更新
-			--设置redis的内容60分钟后失效
-			RedisExecute(string.format("expire %s:%d %d",self.tbname, uid, REDIS_EXPIRE_INTERVAL))
+			if not self.dbNode[uid] then
+				if row then self:Update( row ) end --先更新
+				--设置redis的内容60分钟后失效
+				RedisExecute(string.format("expire %s:%d %d", self.tbname, uid, REDIS_EXPIRE_INTERVAL))
+			end
 		end
 
 		self.recordset[uid] = nil
 		self.dbNode[uid] = nil
+	else
+		LOG_ERROR("UnLoad invalid uid:%d, not Load in mem", uid)
 	end
 end
 
@@ -69,9 +76,11 @@ function UserEntity:Add( row, dbNode )
 
 	if uid and dbNode then
 		--同步到dbNode
-		local ret,id,data = RpcCall(dbNode, REMOTE_SERVICE, REMOTE_CALL, self.tbname, "Add", row)
-		self.recordset[uid] = data
-		self.dbNode[uid] = dbNode
+		local ret = RpcCall(dbNode, REMOTE_SERVICE, REMOTE_CALL, self.tbname, "Add", row)
+		if ret[1] then
+			self.recordset[uid] = ret[3]
+			self.dbNode[uid] = dbNode
+		end
 	else
 		local id = self:GetNextId()
 		local ret = EntityImpl:AddUser(self.tbname, id, row)
@@ -79,7 +88,7 @@ function UserEntity:Add( row, dbNode )
 			row[self.key] = id
 			self.recordset[uid] = row
 		end
-		return ret,id,row
+		return { ret,id,row }
 	end
 	
 end
@@ -108,7 +117,6 @@ end
 
 -- row中包含[self.indexkey]字段,row为k,v形式table
 function UserEntity:Update( row, nosync )
-
 	local updateOffline = false
 	local uid = row[self.indexkey]
 	if not uid then
@@ -120,8 +128,13 @@ function UserEntity:Update( row, nosync )
 
 	local ret = true
 	if updateOffline and not nosync then --离线玩家数据更新到DB
-		local _centerserver = GetClusterNodeByName("center")
-		local dbserver = RpcCall( _centerserver, "route", "GetUserSvr", uid)
+		local _centerserver = GetClusterNodeByName("center", true)
+		local dbserver
+		for _,node in pairs(_centerserver) do
+			dbserver = RpcCall( node, "route", "GetUserSvr", uid)
+			if dbserver then break end
+		end
+		
 		assert(dbserver, "UserEntity:Update Offline User Info, uid not exist:" .. uid)
 		ret = RpcCall( dbserver, REMOTE_SERVICE, REMOTE_CALL, self.tbname, "Update", row, true)
 	else

@@ -2,7 +2,7 @@
 * @Author: linfeng
 * @Date:   2017-01-04 10:05:59
 * @Last Modified by:   linfeng
-* @Last Modified time: 2017-06-07 17:49:51
+* @Last Modified time: 2017-06-19 15:00:12
 */
 
 #include <unistd.h>
@@ -34,6 +34,7 @@ while(0)
 void ShowUsage()
 {
 	FAIL("Usage: \n-h\tthis help\n"
+					"-a\tstart all services\n"
 					"-l\tstart login server,default use etc/start_login.sh\n"
 					"-g\tstart game server,default use etc/start_game.sh\n"
 					"-b\tstart battle server,default use etc/start_battle.sh\n"
@@ -44,17 +45,24 @@ void ShowUsage()
 					"-s\t[name]\tstop server by name\n");
 }
 
-void boot_server(char* name,char* shell)
+void boot_server(char* name,char* shell, bool all_start)
 {
 	OK("start %s server...",name);
-	
-	//启动程序
 	char cmd[128] = {0};
+	int f_daemon = all_start ? 0 : 1;
+	int t_daemon = all_start ? 1 : 0;
+	//修改daemon参数
+	snprintf(cmd,sizeof(cmd), "sed -i \"s/export DAEMON=%d/export DAEMON=%d/g\" %s", f_daemon, t_daemon, shell);
+	if(system(cmd) == -1)
+		FAIL("config to daemon = 1 error!");
+
+	//启动程序
 	snprintf(cmd,sizeof(cmd),"bash %s",shell);
 	if(system(cmd) == -1)
 		FAIL("start %s fail,shell:%s",name,shell);
 
 	OK("boot <%s> ok",name);
+	usleep(1000 * 1000);
 }
 
 void kill_server(char* name)
@@ -90,14 +98,20 @@ int main(int argc, char* argv[])
 
 	bool boot_login = false,boot_game = false,boot_battle = false, stop_server = false;
 	bool boot_monitor = false, boot_center = false, boot_db = false, boot_redis = false;
+	bool all_start = false;
 	char process_name[128] = {0};
 	int opt;
-	while((opt = getopt(argc,argv,"lgbms:cdwhr")) != -1)
+	while((opt = getopt(argc,argv,"algbms:cdwhr")) != -1)
 	{
 		switch(opt)
 		{
 			case 'h':
 				ShowUsage();
+				break;
+			case 'a':
+				boot_login = true,boot_game = true,boot_battle = true;
+				boot_monitor = true, boot_center = true, boot_db = true, boot_redis = true;
+				all_start = true;
 				break;
 			case 'l':
 				boot_login = true;
@@ -134,23 +148,29 @@ int main(int argc, char* argv[])
 		&& !boot_monitor && !boot_center && !boot_db && !boot_redis)
 		ShowUsage();
 
+	if(all_start)
+	{
+		char cmd[256];
+		snprintf(cmd, sizeof(cmd), "pkill main");
+		system(cmd);
+	}
 	
 	if(stop_server)
 		kill_server(process_name);
 	if(boot_redis)
-		boot_server("redis", "etc/start_redis.sh");
-	if(boot_login)
-		boot_server("login", "etc/start_login.sh");
-	if(boot_game)
-		boot_server("game", "etc/start_game.sh");
-	if(boot_battle)
-		boot_server("battle", "etc/start_battle.sh");
+		boot_server("redis", "etc/start_redis.sh", all_start);
 	if(boot_monitor)
-		boot_server("monitor", "etc/start_monitor.sh");
+		boot_server("monitor", "etc/start_monitor.sh", all_start);
+	if(boot_battle)
+		boot_server("battle", "etc/start_battle.sh", all_start);
 	if(boot_center)
-		boot_server("center", "etc/start_center.sh");
+		boot_server("center", "etc/start_center.sh", all_start);
 	if(boot_db)
-		boot_server("db", "etc/start_db.sh");
+		boot_server("db", "etc/start_db.sh", all_start);
+	if(boot_login)
+		boot_server("login", "etc/start_login.sh", all_start);
+	if(boot_game)
+		boot_server("game", "etc/start_game.sh", all_start);
 	
     return 0;
 }

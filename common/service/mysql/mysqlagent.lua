@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-20 15:53:48
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-15 15:00:07
+-- @Last Modified time: 2017-06-21 10:56:34
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -46,6 +46,5 @@ function response.query( ... )
 		--retry,if disconnect, will auto reconnect at socketchannel in last query
 		ret = mysqlClient:query(...)
 	end
-
 	return ret
 end

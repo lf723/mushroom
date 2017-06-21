@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2016-11-25 18:21:47
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-08 10:08:52
+-- @Last Modified time: 2017-06-19 11:12:25
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -19,7 +19,7 @@ local function initLogicLuaService( ... )
 end
 
 skynet.start(function ()
-	local selfNodeName = "game"..skynet.getenv("serverid")
+	local selfNodeName = skynet.getenv("clusternode")..skynet.getenv("serverid")
 	--init log
 	snax.uniqueservice("syslog", selfNodeName)
 

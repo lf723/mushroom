@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-06-06 11:28:54
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-06 17:50:49
+-- @Last Modified time: 2017-06-19 14:57:55
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -33,13 +33,13 @@ end
 
 function response.UnLoad( tbtype, uid, dbNode, tbname )
 	if tbname then	
-		--加载某个指定表
+		--卸载某个指定表
 		SM[tbname].req.UnLoad( uid, dbNode )
 	else	
-		--全部加载
+		--全部卸载
 		local entityCfg = EntityImpl:GetEntityCfg( tbtype, tbname )
 		for _,v in pairs(entityCfg) do
-			SM[v.name].req.UnLoad( uid, dbNode )
+			SM[v.name].req.UnLoad( uid )
 		end
 	end
 end

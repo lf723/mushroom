@@ -3,31 +3,31 @@ ulimit -c unlimited
 ulimit -n 65535
 
 #工作线程数量(根据CPU核心数而定)
-export DB_WORK_THREAD=8
+export WORK_THREAD=8
 #是否启动为守护模式
-export DB_DAEMON=0
+export DAEMON=1
 
 #cluster配置
 export MONITOR_NODE_NAME="monitor"
-export DB_CLUSTER_NODE="db"
-export DB_CLUSTER_IP="127.0.0.1"
-export DB_CLUSTER_PORT="7003"
+export CLUSTER_NODE="db"
+export CLUSTER_IP="127.0.0.1"
+export CLUSTER_PORT="7004"
 
 #WEB监听端口
-export DB_WEB_PORT=8001
+export WEB_PORT=8004
 
 #skynet DEBUG端口(telnet),0为不开启
-export DB_DEBUG_PORT=0
+export DEBUG_PORT=0
 
 #时区偏移
-export DB_TIMEDIFF=8
+export TIMEDIFF=8
 
 #服务器ID
-export DB_SERVER_ID=0
+export SERVER_ID=0
 
 #远程调试开关
-export DB_REMOTE_DEBUG=0
-export DB_REMOTE_DEBUG_IP="127.0.0.1"
+export REMOTE_DEBUG=0
+export REMOTE_DEBUG_IP="127.0.0.1"
 
 #启动游服
 chmod +x main

@@ -35,7 +35,7 @@ do
 	sed -i "s#logfile ${prefix}redis-log-${i}#logfile redis-log#g" ${prefix}redis.conf
 	sed -i "s#pidfile ${prefix}redis_${initport}.pid#pidfile redis_6379.pid#g" ${prefix}redis.conf
 
-	echo "runing redis-server-${i} ok...\n"
+	echo "runing redis-server-${i} ok..."
 
 	let initport=${initport}+1
 done

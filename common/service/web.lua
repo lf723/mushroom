@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2015-09-17 14:21:53
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-16 17:56:33
+-- @Last Modified time: 2017-06-20 09:54:31
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -10,6 +10,7 @@ local socket = require "socket"
 local httpd = require "http.httpd"
 local sockethelper = require "http.sockethelper"
 local urllib = require "http.url"
+local memory = require "memory"
 local table = table
 local string = string
 
@@ -28,7 +29,28 @@ end
 
 function WebCmd.info( ... )
 	--query instance's all service info
-	return skynet.call(".launcher", "lua", "STAT")
+	local stat = skynet.call(".launcher", "lua", "STAT")
+	local list = skynet.call(".launcher", "lua", "LIST")
+	local mem = skynet.call(".launcher", "lua", "MEM")
+	local meminfo = memory.info()
+	local cmem = {}
+	for k,v in pairs(meminfo) do
+		cmem[skynet.address(k)] = v
+	end
+
+	assert(table.size(stat) == table.size(list))
+	local resp = skynet.getenv("clusternode") .. (skynet.getenv("serverid") or "") .."\n" ..
+				"total alloc mem:" .. memory.total() // 1024 .. " Kb\n" .. 
+				"block mem:" .. memory.block() // 1024 .. " Kb\n"
+	for addr,name in pairs(list) do
+		resp = resp .. "cpu:" .. stat[addr].cpu .. "s\t\t" .. 
+				"mqlen:" .. stat[addr].mqlen .. "\t\t" .. 
+				"task:" .. stat[addr].task .. "\t\t" .. 
+				"message:" .. stat[addr].message .. "\t\t" .. 
+				"cmem:" .. ( cmem[addr] or 0 ) // 1024 .. " Kb\t\t" .. 
+				"mem:" .. mem[addr] .. "\n"
+	end
+	return resp
 end
 
 ------------------------------------------------------------------------------------------------

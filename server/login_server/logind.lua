@@ -23,9 +23,14 @@ local function DistributeServer( uid )
 		assert(false, "DistributeServer Not Found cluster file")
 	end
 
-	local _centerserver = GetClusterNodeByName("center")
+	local _centerserver = GetClusterNodeByName("center", true)
 	assert(_centerserver)
-	local dbserver = RpcCall( _centerserver, "route", "GetUserSvr", uid)
+	local dbserver
+	for _,node in pairs(_centerserver) do
+		dbserver = RpcCall( node, "route", "GetUserSvr", uid)
+		if dbserver then break end
+	end
+	
 	local newUser =false
 	--未找到,新玩家
 	if not dbserver then
