@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-20 15:53:48
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-21 10:56:34
+-- @Last Modified time: 2017-06-21 11:01:01
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -22,7 +22,7 @@ local function initMysqlConn( ... )
 		database = skynet.getenv("mysqldb"),
 		user = skynet.getenv("mysqluser"),
 		password = skynet.getenv("mysqlpwd"),
-		max_packet_size = 1024 * 1024,
+		max_packet_size = 1024 * 1024 * 64, --max 64Mb
 		on_connect = on_connect
 	}
 

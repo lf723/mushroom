@@ -38,7 +38,7 @@ $(LUA_CLIB_PATH)/cjson.so : $(LUA_CLIB_PATH)
 	cd 3rd/lua-cjson && $(MAKE)
 
 $(LUA_CLIB_PATH)/protobuf.so : $(LUA_CLIB_PATH)
-	cd 3rd/pbc/binding/lua53 && $(MAKE)
+	cd 3rd/pbc && $(MAKE) lib && cd - && cd 3rd/pbc/binding/lua53 && $(MAKE)
 
 start : common/luaclib_src/start.c
 	$(CC) $(CFLAGS) $^ -o $@
