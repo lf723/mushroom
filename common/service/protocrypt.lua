@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-06-02 09:29:33
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-05 17:22:12
+-- @Last Modified time: 2017-07-04 16:48:17
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -32,13 +32,14 @@ function init( ... )
 			start_pos = end_pos + 1
 		end
 	end
-	--[[
+
 	--register enum CMD
 	local f = io.open(protobufFilePath .. "gate.proto")
 	local beginRead = false
 	local protocolEnum = {}
 	for line in f:lines() do
 		if beginRead then
+			if line:find("}") then break end
 			local enumCmd = string.split(string.split(line, ";")[1],"=")
 			enumCmd[1] = string.trim(enumCmd[1]:gsub("_","."))
 			protocolEnum[enumCmd[1] ] = tonumber(string.trim(enumCmd[2]))
@@ -46,13 +47,15 @@ function init( ... )
 
 		if not beginRead then
 			if line:find("enum CMD {") then beginRead = true end
-		elseif beginRead and line:find("}") then
-			break
 		end
 	end
 
+	setmetatable(protocolEnum, { __newindex = function( ... )
+		assert("can't add protocol Enum,only init at protocrypt.lua of init function")
+	end})
+
 	sharedata.new(SHARE_PROTOCOL_ENUM, protocolEnum)
-	]]
+	
 end
 
 function exit( ... )

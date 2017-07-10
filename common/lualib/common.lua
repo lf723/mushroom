@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-05-18 11:18:27
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-20 16:01:18
+-- @Last Modified time: 2017-07-04 17:17:58
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -60,9 +60,9 @@ function RpcSend( node, svrname, method, ... )
 	local remoteHandle,remoteSvrName = SM.rpc.req.RemoteSvr(node, svrname)
 	if remoteHandle then
 		local obj = snax.bind(remoteHandle, remoteSvrName)
-		local ok,ret = pcall(obj.post[method],...)
+		local ok,ret = pcall(obj.post[method], ...)
 		if not ok then 
-			LOG_ERROR("RpcCall Fail->%s",ret)  
+			LOG_ERROR("RpcCall %s-%s-%s Fail->%s", node, svrname, method, ret)  
 			return nil 
 		end
 		return ret

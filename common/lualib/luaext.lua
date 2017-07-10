@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2015-09-18 15:53:40
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-07 11:13:18
+-- @Last Modified time: 2017-07-04 18:11:12
 -- lua扩展
 
 -- table扩展
@@ -75,11 +75,6 @@ end
 -- 深拷贝
 table.copy = function(t, nometa)   
     local result = {}
-
-    if not nometa then
-        setmetatable(result, getmetatable(t))
-    end
-
     for k, v in pairs(t) do
         if type(v) == "table" then
             result[k] = table.copy(v)
@@ -87,6 +82,11 @@ table.copy = function(t, nometa)
             result[k] = v
         end
     end
+
+    if not nometa then
+        setmetatable(result, getmetatable(t))
+    end
+
     return result
 end
 

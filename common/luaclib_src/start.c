@@ -2,7 +2,7 @@
 * @Author: linfeng
 * @Date:   2017-01-04 10:05:59
 * @Last Modified by:   linfeng
-* @Last Modified time: 2017-06-19 15:00:12
+* @Last Modified time: 2017-07-04 16:51:57
 */
 
 #include <unistd.h>
@@ -62,7 +62,8 @@ void boot_server(char* name,char* shell, bool all_start)
 		FAIL("start %s fail,shell:%s",name,shell);
 
 	OK("boot <%s> ok",name);
-	usleep(1000 * 1000);
+	if(all_start == true)
+		usleep(1000 * 1000);
 }
 
 void kill_server(char* name)

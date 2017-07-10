@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-01-10 15:14:06
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-01 17:12:46
+-- @Last Modified time: 2017-07-04 18:11:02
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -48,7 +48,7 @@ function accept.RemoteSend( tbname, method, ... )
 end
 
 function response.GetClusterCfg( ... )
-	return sharedata.query( SHARE_CLUSTER_CFG)
+	return sharedata.query( SHARE_CLUSTER_CFG )
 end
 
 function init( ... )

@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2016-11-24 18:20:33
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-08 10:08:59
+-- @Last Modified time: 2017-07-07 14:51:15
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -9,7 +9,7 @@ local cluster = require "cluster"
 local snax = require "snax"
 
 local function initLogicLuaService( selfNodeName )
-	
+
 end
 
 skynet.start(function ( ... )
@@ -29,12 +29,12 @@ skynet.start(function ( ... )
 		skynet.newservice("debug_console",debugPort)
 	end
 
-	--init lua server
-	initLogicLuaService(selfNodeName)
-
 	--init cluster node
 	SM.monitor_subscribe.req.connectMonitorAndPush(selfNodeName)
 	cluster.open(selfNodeName)
+
+	--init lua server
+	initLogicLuaService(selfNodeName)
 
 	--init login gate
 	skynet.uniqueservice("logind")
