@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2015-09-17 14:21:53
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-20 09:54:31
+-- @Last Modified time: 2017-07-10 18:06:01
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -13,7 +13,40 @@ local urllib = require "http.url"
 local memory = require "memory"
 local table = table
 local string = string
+local lfs = require "lfs"
+--------------------------------------------------local function--------------------------------
 
+local function ListDir(path, fbox, subpath)
+	if string.sub(path, -1) == "/" then path = string.sub(path, 1, -2) end
+	if not subpath then subpath = path end
+	fbox = fbox or {}
+    for file in lfs.dir(subpath) do
+        if file ~= "." and file ~= ".." then
+            local f = subpath..'/'..file
+            local attr = lfs.attributes(f)
+            assert (type(attr) == "table")
+            if attr.mode == "directory" then
+				ListDir(path, fbox, f)
+			elseif attr.mode == "file" then
+				if string.sub(f, -4) == ".lua" then
+					local filedir = string.sub(f, string.len(path)+2, -5)
+					fbox[#fbox+1] = string.gsub(filedir, "/", ".")
+				end
+			end
+        end
+    end
+    return fbox
+end
+
+local function ReadFile( filename )
+	local f = io.open(filename, "rb")
+	if not f then
+		return "Can't open " .. filename
+	end
+	local source = f:read "*a"
+	f:close()
+	return source
+end
 
 --------------------------------------------------WebCmd----------------------------------------
 local WebCmd = {}
@@ -53,6 +86,51 @@ function WebCmd.info( ... )
 	return resp
 end
 
+function WebCmd.hotfix( ... )
+	--get all lua service(include snax lua service)
+	local allServices = skynet.call(".launcher", "lua", "LIST")
+	local hotfixModules = {}
+	local responseRet = ""
+	local hotfixRet
+
+	--snax lua service
+	hotfixModules = ListDir ("hotfix/snax/")
+	for _,hotfixName in pairs(hotfixModules) do
+		local code = ReadFile("hotfix/snax/" .. hotfixName)
+		for address,name in pairs(allServices) do
+			if name == "snlua snaxd " .. hotfixName:match("([^.]*)") then
+				hotfixRet = snax.hotfix(address, code)
+				responseRet = responseRet .. string.format("hotfix snax addr(%s) service(%s) %s\n", address, name, hotfixRet and tostring(hotfixRet) or "true")
+			end
+		end
+	end
+
+	--lua service
+	hotfixModules = ListDir ("hotfix/luaservice/")
+	for _,hotfixName in pairs(hotfixModules) do
+		local code = ReadFile("hotfix/luaservice/" .. hotfixName)
+		for address,name in pairs(allServices) do
+			if name == "snlua " .. hotfixName:match("([^.]*)") then
+				hotfixRet = skynet.call(s, "debug", "RUN", code, "hotfix/luaservice/" .. hotfixName)
+				responseRet = responseRet .. string.format("hotfix luaservice addr(%s) service(%s) %s\n", address, name, hotfixRet and tostring(hotfixRet) or "true")
+			end
+		end
+	end
+	
+
+	--lualib
+	hotfixModules = ListDir ("hotfix/lualib/")
+	for _,hotfixName in pairs(hotfixModules) do
+		local code = ReadFile("hotfix/lualib/" .. hotfixName)
+		for address,name in pairs(allServices) do
+			hotfixRet = skynet.call(s, "debug", "RUN", code, "hotfix/lualib/" .. hotfixName)
+			responseRet = responseRet .. string.format("hotfix lualib addr(%s) service(%s) %s\n", address, name, hotfixRet and tostring(hotfixRet) or "true")
+		end
+	end
+
+	return responseRet
+end
+
 ------------------------------------------------------------------------------------------------
 
 
@@ -77,7 +155,7 @@ if args == "agent" then
 				if code ~= 200 then
 					response(id, code)
 				else
-					--内容回复
+					--content response
 					url = url:sub(2)
 					url = string.split(url,"?")
 
