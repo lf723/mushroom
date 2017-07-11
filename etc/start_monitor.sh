@@ -16,7 +16,7 @@ export CLUSTER_PORT="7000"
 export WEB_PORT=8000
 
 #skynet DEBUG端口(telnet),0为不开启
-export DEBUG_PORT=0
+export DEBUG_PORT=6666
 
 #时区
 export TIMEZONE=8

@@ -15,6 +15,7 @@ LUA_INC_PATH ?= 3rd/skynet/3rd/lua
 CFLAGS = -g -O2 -Wall -std=gnu99 -lrt
 
 BIN = $(LUA_CLIB_PATH)/log.so $(LUA_CLIB_PATH)/cjson.so $(LUA_CLIB_PATH)/protobuf.so $(LUA_CLIB_PATH)/reload.so \
+		$(LUA_CLIB_PATH)/lfs.so \
 		start tool/script/client/StressTest skynet 
 
 all : skynet
@@ -42,6 +43,9 @@ $(LUA_CLIB_PATH)/protobuf.so : $(LUA_CLIB_PATH)
 
 $(LUA_CLIB_PATH)/reload.so : common/luaclib_src/lua-reload.c | $(LUA_CLIB_PATH)
 	$(CC) $(CFLAGS) $(SHARED) -I./3rd/skynet/3rd/lua -I./3rd/skynet/skynet-src $^ -o $@
+
+$(LUA_CLIB_PATH)/lfs.so : $(LUA_CLIB_PATH)
+	cd 3rd/luafilesystem && $(MAKE) && cd - && cp 3rd/luafilesystem/src/lfs.so $(LUA_CLIB_PATH)/lfs.so
 
 start : common/luaclib_src/start.c
 	$(CC) $(CFLAGS) $^ -o $@
@@ -80,4 +84,5 @@ clean :
 	rm -rf $(PREFIX)
 	rm -rf start
 	rm -rf tool/script/client/StressTest
+	cd 3rd/luafilesystem && $(MAKE) clean && cd -
 	cd 3rd/skynet && $(MAKE) clean && cd -

@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-07 17:08:20
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-08 10:36:23
+-- @Last Modified time: 2017-07-11 14:49:45
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -14,6 +14,7 @@ local cluster = require "cluster"
 local clusterInfo = {}
 local thisNodeName
 local heartError = {}
+local heartCo
 
 local function ClusterHold( ... )
 	local CheckStr = "check"
@@ -61,7 +62,7 @@ function init( selfNodeName )
 		SM.rpc.req.updateClusterName(clusterInfo)
 	end
 
-	skynet.fork(ClusterHold)
+	heartCo = skynet.fork(ClusterHold)
 end
 
 function exit( ... )

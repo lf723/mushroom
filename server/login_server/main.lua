@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2016-11-24 18:20:33
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-07-07 14:51:15
+-- @Last Modified time: 2017-07-11 11:13:02
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -24,7 +24,7 @@ skynet.start(function ( ... )
 	end
 
 	--init debug
-	local debugPort = tonumber(skynet.getenv("debug_port")) or 0
+	local debugPort = tonumber(skynet.getenv("debugport")) or 0
 	if debugPort > 0 then
 		skynet.newservice("debug_console",debugPort)
 	end

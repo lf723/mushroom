@@ -10,7 +10,7 @@ ulimit -n 65535
 #工作线程数量(根据CPU核心数而定)
 export WORK_THREAD=8
 #是否启动为守护模式
-export DAEMON=0
+export DAEMON=1
 
 #游服配置
 export HOST="0.0.0.0"

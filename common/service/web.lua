@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2015-09-17 14:21:53
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-07-10 18:06:01
+-- @Last Modified time: 2017-07-11 11:24:14
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -14,9 +14,12 @@ local memory = require "memory"
 local table = table
 local string = string
 local lfs = require "lfs"
+local skynetcache = require "skynet.codecache"
 --------------------------------------------------local function--------------------------------
 
 local function ListDir(path, fbox, subpath)
+	local check = io.open(path,"r")
+	if not check then return {} else check:close() end
 	if string.sub(path, -1) == "/" then path = string.sub(path, 1, -2) end
 	if not subpath then subpath = path end
 	fbox = fbox or {}
@@ -92,15 +95,22 @@ function WebCmd.hotfix( ... )
 	local hotfixModules = {}
 	local responseRet = ""
 	local hotfixRet
+	local fullHotfixName
+
+	--clear lua vm code cache
+	skynetcache.clear()
 
 	--snax lua service
 	hotfixModules = ListDir ("hotfix/snax/")
 	for _,hotfixName in pairs(hotfixModules) do
-		local code = ReadFile("hotfix/snax/" .. hotfixName)
+		fullHotfixName = "hotfix/snax/" .. hotfixName .. ".lua"
+		local code = ReadFile(fullHotfixName)
 		for address,name in pairs(allServices) do
-			if name == "snlua snaxd " .. hotfixName:match("([^.]*)") then
-				hotfixRet = snax.hotfix(address, code)
-				responseRet = responseRet .. string.format("hotfix snax addr(%s) service(%s) %s\n", address, name, hotfixRet and tostring(hotfixRet) or "true")
+			if name == "snlua snaxd " .. hotfixName then
+				local snaxObj = snax.bind(address, hotfixName) --snax service obj,use for snax.hotfix
+				hotfixRet = snax.hotfix(snaxObj, code)
+				responseRet = responseRet .. string.format("hotfix snax(%s) addr(%s) service(%s) %s\n", 
+												fullHotfixName, address, name, hotfixRet and tostring(hotfixRet) or "true")
 			end
 		end
 	end
@@ -108,11 +118,13 @@ function WebCmd.hotfix( ... )
 	--lua service
 	hotfixModules = ListDir ("hotfix/luaservice/")
 	for _,hotfixName in pairs(hotfixModules) do
-		local code = ReadFile("hotfix/luaservice/" .. hotfixName)
+		fullHotfixName = "hotfix/luaservice/" .. hotfixName .. ".lua"
+		local code = ReadFile(fullHotfixName)
 		for address,name in pairs(allServices) do
-			if name == "snlua " .. hotfixName:match("([^.]*)") then
-				hotfixRet = skynet.call(s, "debug", "RUN", code, "hotfix/luaservice/" .. hotfixName)
-				responseRet = responseRet .. string.format("hotfix luaservice addr(%s) service(%s) %s\n", address, name, hotfixRet and tostring(hotfixRet) or "true")
+			if name == "snlua " .. hotfixName then
+				hotfixRet = skynet.call(address, "debug", "RUN", code)
+				responseRet = responseRet .. string.format("hotfix luaservice(%s) addr(%s) service(%s) %s\n", 
+												fullHotfixName, address, name, hotfixRet and tostring(hotfixRet) or "true")
 			end
 		end
 	end
@@ -121,10 +133,12 @@ function WebCmd.hotfix( ... )
 	--lualib
 	hotfixModules = ListDir ("hotfix/lualib/")
 	for _,hotfixName in pairs(hotfixModules) do
-		local code = ReadFile("hotfix/lualib/" .. hotfixName)
+		fullHotfixName = "hotfix/lualib/" .. hotfixName .. ".lua"
+		local code = ReadFile(fullHotfixName)
 		for address,name in pairs(allServices) do
-			hotfixRet = skynet.call(s, "debug", "RUN", code, "hotfix/lualib/" .. hotfixName)
-			responseRet = responseRet .. string.format("hotfix lualib addr(%s) service(%s) %s\n", address, name, hotfixRet and tostring(hotfixRet) or "true")
+			hotfixRet = skynet.call(address, "debug", "RUN", code)
+			responseRet = responseRet .. string.format("hotfix lualib(%s) addr(%s) service(%s) %s\n", 
+											fullHotfixName, address, name, hotfixRet and tostring(hotfixRet) or "true")
 		end
 	end
 
