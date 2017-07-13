@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2015-09-17 14:21:53
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-07-11 11:24:14
+-- @Last Modified time: 2017-07-12 10:49:19
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -14,9 +14,8 @@ local memory = require "memory"
 local table = table
 local string = string
 local lfs = require "lfs"
-local skynetcache = require "skynet.codecache"
---------------------------------------------------local function--------------------------------
 
+--------------------------------------------------local function--------------------------------
 local function ListDir(path, fbox, subpath)
 	local check = io.open(path,"r")
 	if not check then return {} else check:close() end
@@ -97,9 +96,6 @@ function WebCmd.hotfix( ... )
 	local hotfixRet
 	local fullHotfixName
 
-	--clear lua vm code cache
-	skynetcache.clear()
-
 	--snax lua service
 	hotfixModules = ListDir ("hotfix/snax/")
 	for _,hotfixName in pairs(hotfixModules) do
@@ -126,19 +122,6 @@ function WebCmd.hotfix( ... )
 				responseRet = responseRet .. string.format("hotfix luaservice(%s) addr(%s) service(%s) %s\n", 
 												fullHotfixName, address, name, hotfixRet and tostring(hotfixRet) or "true")
 			end
-		end
-	end
-	
-
-	--lualib
-	hotfixModules = ListDir ("hotfix/lualib/")
-	for _,hotfixName in pairs(hotfixModules) do
-		fullHotfixName = "hotfix/lualib/" .. hotfixName .. ".lua"
-		local code = ReadFile(fullHotfixName)
-		for address,name in pairs(allServices) do
-			hotfixRet = skynet.call(address, "debug", "RUN", code)
-			responseRet = responseRet .. string.format("hotfix lualib(%s) addr(%s) service(%s) %s\n", 
-											fullHotfixName, address, name, hotfixRet and tostring(hotfixRet) or "true")
 		end
 	end
 
