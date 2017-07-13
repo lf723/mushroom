@@ -20,3 +20,6 @@ StressTest
 3rd/pbc/build/pbc
 3rd/pbc/build/test
 etc/clustername.lua
+*.xcuserstate
+etc/redis/redis-cli
+etc/redis/redis-server
