@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-05-17 17:14:13
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-20 16:24:20
+-- @Last Modified time: 2017-07-27 13:44:39
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -187,11 +187,12 @@ function EntityImpl:UpdateCommonMysql( tbname, dataIndex )
 	local obj = self:GetEntityCfg(TB_COMMON, tbname)
 	
 	local sql = string.format("update %s set %s = '%s' where %d = %d;",
-																obj.name, 
-																obj.value, 
-																cjson.encode(dataIndex),
-																obj.key,
-																dataIndex[obj.key])
+																		obj.name, 
+																		obj.value, 
+																		cjson.encode(dataIndex),
+																		obj.key,
+																		dataIndex[obj.key]
+							)
 		
 
 	--update obj.name by dataIndex's index to mysql
@@ -214,12 +215,13 @@ function EntityImpl:UpdateUserMysql( tbname, dataIndex )
 	local uid = assert(dataIndex[obj.indexkey])
 	--mysql
 	local sqlCmd = string.format("update %s set %s = '%s' where %s->'$.%s' = %d;",
-																		obj.name, 
-																		obj.value, 
-																		cjson.encode(dataIndex),
-																		obj.value,
-																		obj.indexkey,
-																		uid)
+																					obj.name, 
+																					obj.value, 
+																					cjson.encode(dataIndex),
+																					obj.value,
+																					obj.indexkey,
+																					uid
+								)
 	
 
 	--redis
@@ -299,7 +301,6 @@ function EntityImpl:DelUserMysql( tbname, dataKeys )
 	assert(type(dataKeys) == "table")
 	local obj = assert(self:GetEntityCfg(TB_USER, tbname))
 
-	
 	local uid = dataKeys[obj.indexkey]
 	local sqlCmd = string.format("delete from %s where %s->'$.%s' = %d;",
 																		obj.name,
