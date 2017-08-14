@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-05-18 11:18:27
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-07-04 17:17:58
+-- @Last Modified time: 2017-08-07 16:40:19
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -40,36 +40,42 @@ function RedisExecute( cmd, routeIndex, pipeline, resp )
 	return obj.req.Do(cmd, pipeline, resp)
 end
 
-function RpcCall( node, svrname, method, ... )
-	local remoteHandle,remoteSvrName = SM.rpc.req.RemoteSvr(node, svrname)
+local function GetRemoteSvr( node, svrname )
+	local remoteHandle, remoteSvrName = SM.rpc.req.RemoteSvr(node, svrname)
 	if remoteHandle then
-		local obj = snax.bind(remoteHandle, remoteSvrName)
-		local ok,ret = pcall(obj.req[method], ...)
-		if not ok then 
-			LOG_ERROR("RpcCall %s-%s-%s Fail->%s", node, svrname, method, ret)  
-			return nil 
-		end
-		return ret
+		return snax.bind(remoteHandle, remoteSvrName)
 	else
-		LOG_SKYNET("RpcCall,snax remote node:%s svr:%s fail", node, svrname)
+		LOG_SKYNET("GetRemoteSvr,snax remote node:%s svr:%s fail", node, svrname)
 		return nil
 	end
 end
 
-function RpcSend( node, svrname, method, ... )
-	local remoteHandle,remoteSvrName = SM.rpc.req.RemoteSvr(node, svrname)
-	if remoteHandle then
-		local obj = snax.bind(remoteHandle, remoteSvrName)
-		local ok,ret = pcall(obj.post[method], ...)
-		if not ok then 
-			LOG_ERROR("RpcCall %s-%s-%s Fail->%s", node, svrname, method, ret)  
-			return nil 
-		end
-		return ret
-	else
+function RpcCall( node, svrname, method, ... )
+	local RemoteSvr = GetRemoteSvr()
+	if not RemoteSvr then
 		LOG_SKYNET("RpcCall,snax remote node:%s svr:%s fail", node, svrname)
 		return nil
 	end
+	local ok,ret = pcall(RemoteSvr.req[method], ...)
+	if not ok then
+		LOG_SKYNET("RpcCall %s-%s-%s Fail->%s", node, svrname, method, ret)
+		return nil
+	end
+	return ret
+end
+
+function RpcSend( node, svrname, method, ... )
+	local RemoteSvr = GetRemoteSvr()
+	if not RemoteSvr then
+		LOG_SKYNET("RpcSend,snax remote node:%s svr:%s fail", node, svrname)
+		return nil
+	end
+	local ok,ret = pcall(RemoteSvr.post[method], ...)
+	if not ok then
+		LOG_SKYNET("RpcSend %s-%s-%s Fail->%s", node, svrname, method, ret)
+		return nil
+	end
+	return ret
 end
 
 function TableUnpackToString( tb )

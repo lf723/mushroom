@@ -12,7 +12,7 @@ SHARED := -fPIC --shared
 LUA_CLIB_PATH ?= common/luaclib
 PREFIX ?= bin
 LUA_INC_PATH ?= 3rd/skynet/3rd/lua
-CFLAGS = -g -O2 -Wall -std=gnu99 -lrt
+CFLAGS = -g -O2 -Wall -std=gnu99 -lrt 
 
 BIN = $(LUA_CLIB_PATH)/log.so $(LUA_CLIB_PATH)/cjson.so $(LUA_CLIB_PATH)/protobuf.so $(LUA_CLIB_PATH)/reload.so \
 		$(LUA_CLIB_PATH)/lfs.so \

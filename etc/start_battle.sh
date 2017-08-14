@@ -1,7 +1,7 @@
 # @Author: linfeng
 # @Date:   2017-06-19 09:45:31
 # @Last Modified by:   linfeng
-# @Last Modified time: 2017-06-19 11:19:50
+# @Last Modified time: 2017-08-14 11:13:23
 
 #开启core,修改最大文件描述符
 ulimit -c unlimited
@@ -29,10 +29,6 @@ export TIMEZONE=8
 
 #服务器ID
 export SERVER_ID=0
-
-#远程调试开关
-export REMOTE_DEBUG=0
-export REMOTE_DEBUG_IP="127.0.0.1"
 
 #启动游服
 chmod +x main

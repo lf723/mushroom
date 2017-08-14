@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-01-10 15:14:06
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-07-04 18:11:02
+-- @Last Modified time: 2017-08-07 16:30:13
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -39,12 +39,12 @@ function response.updateClusterName( clusterInfo )
 	sharedata.update(SHARE_CLUSTER_CFG, clusterInfo)
 end
 
-function response.RemoteCall( tbname, method, ... )
-	return SM[tbname].req[method](...)
+function response.RemoteCall( service, method, ... )
+	return SM[service].req[method](...)
 end
 
-function accept.RemoteSend( tbname, method, ... )
-	SM[tbname].req[method](...)
+function accept.RemoteSend( service, method, ... )
+	SM[service].req[method](...)
 end
 
 function response.GetClusterCfg( ... )

@@ -25,10 +25,6 @@ export TIMEDIFF=8
 #服务器ID
 export SERVER_ID=0
 
-#远程调试开关
-export REMOTE_DEBUG=0
-export REMOTE_DEBUG_IP="127.0.0.1"
-
 #启动游服
 chmod +x main
 ./main etc/db.conf

@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-02-07 17:08:20
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-07-12 10:39:46
+-- @Last Modified time: 2017-08-14 11:10:40
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -14,23 +14,11 @@ local cluster = require "cluster"
 local clusterInfo = {}
 local thisNodeName
 local heartError = {}
-local heartCo
-
-local co_yield = false
-
-local test = require "test"
-
-local function TestFunc( ... )
-	print("TestFunc")
-	test.test()
-end
 
 local function ClusterHold( ... )
 	local CheckStr = "check"
 	while true do
 		skynet.sleep(3 * 100)
-		if co_yield then print("break") co_yield = false break end
-		TestFunc()
 		local sync = false
 		for node,info in pairs(clusterInfo) do
 			if node ~= thisNodeName then
@@ -75,7 +63,7 @@ function init( selfNodeName )
 		SM.rpc.req.updateClusterName(clusterInfo)
 	end
 
-	heartCo = skynet.fork(ClusterHold)
+	skynet.fork(ClusterHold)
 end
 
 function exit( ... )
