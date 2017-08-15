@@ -1,15 +1,15 @@
 -- @Author: linfeng
 -- @Date:   2017-06-07 14:29:14
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-08 11:04:35
+-- @Last Modified time: 2017-08-14 17:14:51
 
 local skynet = require "skynet"
 require "skynet.manager"
 local string = string
 local table = table
 local math = math
-local snax = require "snax"
-local cluster = require "cluster"
+local snax = require "skynet.snax"
+local cluster = require "skynet.cluster"
 
 local UserRoute = {}
 

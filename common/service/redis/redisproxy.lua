@@ -1,11 +1,11 @@
 -- @Author: linfeng
 -- @Date:   2017-02-09 15:12:54
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-16 16:40:02
+-- @Last Modified time: 2017-08-14 17:12:21
 
 local skynet = require "skynet"
 require "skynet.manager"
-local snax = require "snax"
+local snax = require "skynet.snax"
 
 local redisAgentSvrs = {}
 local redisAgentNum

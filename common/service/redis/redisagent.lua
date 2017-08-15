@@ -1,14 +1,14 @@
 -- @Author: linfeng
 -- @Date:   2017-02-09 15:13:21
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-15 15:04:43
+-- @Last Modified time: 2017-08-14 17:16:35
 
 local skynet = require "skynet"
 require "skynet.manager"
 local string = string
 local table = table
 local math = math
-local redis = require "redis"
+local redis = require "skynet.db.redis"
 
 local redisInstance
 

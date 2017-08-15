@@ -1,9 +1,9 @@
 -- @Author: linfeng
 -- @Date:   2015-07-01 15:42:49
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-06 17:50:41
+-- @Last Modified time: 2017-08-14 17:12:40
 local skynet = require "skynet"
-local snax = require "snax"
+local snax = require "skynet.snax"
 require "Entity"
 local EntityImpl = require "EntityImpl"
 

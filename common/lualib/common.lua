@@ -1,14 +1,14 @@
 -- @Author: linfeng
 -- @Date:   2017-05-18 11:18:27
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-08-07 16:40:19
+-- @Last Modified time: 2017-08-14 18:17:19
 
 local skynet = require "skynet"
 require "skynet.manager"
 local string = string
 local table = table
 local math = math
-local snax = require "snax"
+local snax = require "skynet.snax"
 
 function MySqlExecute( sql, routeIndex, sync )
 	local mysqlHandle, mysqlName = SM.mysqlproxy.req.route(routeIndex)
@@ -51,7 +51,7 @@ local function GetRemoteSvr( node, svrname )
 end
 
 function RpcCall( node, svrname, method, ... )
-	local RemoteSvr = GetRemoteSvr()
+	local RemoteSvr = GetRemoteSvr( node, svrname )
 	if not RemoteSvr then
 		LOG_SKYNET("RpcCall,snax remote node:%s svr:%s fail", node, svrname)
 		return nil
@@ -65,7 +65,7 @@ function RpcCall( node, svrname, method, ... )
 end
 
 function RpcSend( node, svrname, method, ... )
-	local RemoteSvr = GetRemoteSvr()
+	local RemoteSvr = GetRemoteSvr( node, svrname )
 	if not RemoteSvr then
 		LOG_SKYNET("RpcSend,snax remote node:%s svr:%s fail", node, svrname)
 		return nil

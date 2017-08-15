@@ -1,7 +1,7 @@
 local login = require "logingate"
-local crypt = require "crypt"
+local crypt = require "skynet.crypt"
 local skynet = require "skynet"
-local cluster = require "cluster"
+local cluster = require "skynet.cluster"
 
 local server = {
 	host = "0.0.0.0",

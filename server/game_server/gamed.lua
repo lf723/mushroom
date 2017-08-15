@@ -1,8 +1,8 @@
 local msgserver = require "gamegate"
-local crypt = require "crypt"
+local crypt = require "skynet.crypt"
 local skynet = require "skynet"
-local cluster = require "cluster"
-local snax = require "snax"
+local cluster = require "skynet.cluster"
+local snax = require "skynet.snax"
 
 local server = {}
 local users = {}

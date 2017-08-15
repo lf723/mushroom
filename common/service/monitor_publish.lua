@@ -1,15 +1,15 @@
 -- @Author: linfeng
 -- @Date:   2017-02-07 17:08:20
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-08-14 11:10:40
+-- @Last Modified time: 2017-08-14 17:14:49
 
 local skynet = require "skynet"
 require "skynet.manager"
 local string = string
 local table = table
 local math = math
-local snax = require "snax"
-local cluster = require "cluster"
+local snax = require "skynet.snax"
+local cluster = require "skynet.cluster"
 
 local clusterInfo = {}
 local thisNodeName

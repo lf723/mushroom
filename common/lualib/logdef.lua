@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-01-09 15:55:55
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-02 11:11:49
+-- @Last Modified time: 2017-08-14 18:16:30
 
 --Log Define, level = (0-199)
 --系统级日志
@@ -20,12 +20,11 @@ E_LOG_DB					=			{ name = "Db", 				level = 6 }
 --系统相关日志写入
 function LOG_SYS( loginfo, fmt, ... )
 	local msg = string.format(fmt, ...)
-	--local info = debug.getinfo(2)
-	--if info then
-	--	msg = string.format("%s [%s:%d] %s", os.date("%Y-%m-%d %H:%M:%S"), info.short_src, info.currentline, msg)
-	--end
+	local info = debug.getinfo(2)
+	if info then
+		msg = string.format("%s [%s:%d] %s", os.date("%Y-%m-%d %H:%M:%S"), info.short_src, info.currentline, msg)
+	end
 
-	msg = string.format("%s %s", os.date("%Y-%m-%d %H:%M:%S"), msg)
 	loginfo.msg = msg
 	loginfo.dir = LOG_PATH
 	loginfo.basename = true

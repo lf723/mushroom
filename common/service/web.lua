@@ -1,16 +1,16 @@
 -- @Author: linfeng
 -- @Date:   2015-09-17 14:21:53
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-07-12 10:49:19
+-- @Last Modified time: 2017-08-14 17:35:45
 
 local skynet = require "skynet"
 require "skynet.manager"
-local snax = require "snax"
-local socket = require "socket"
+local snax = require "skynet.snax"
+local socket = require "skynet.socket"
 local httpd = require "http.httpd"
 local sockethelper = require "http.sockethelper"
 local urllib = require "http.url"
-local memory = require "memory"
+local memory = require "skynet.memory"
 local table = table
 local string = string
 local lfs = require "lfs"

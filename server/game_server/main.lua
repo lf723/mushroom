@@ -1,12 +1,12 @@
 -- @Author: linfeng
 -- @Date:   2016-11-25 18:21:47
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-19 11:12:25
+-- @Last Modified time: 2017-08-14 17:34:24
 
 local skynet = require "skynet"
 require "skynet.manager"
-local cluster = require"cluster"
-local snax = require "snax"
+local cluster = require"skynet.cluster"
+local snax = require "skynet.snax"
 local EntityImpl = require "EntityImpl"
 require "gamecfg"
 

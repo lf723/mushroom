@@ -8,6 +8,7 @@ export WORK_THREAD=8
 export DAEMON=0
 
 #cluster配置
+export MONITOR_NODE_NAME="monitor"
 export CLUSTER_NODE="monitor"
 export CLUSTER_IP="127.0.0.1"
 export CLUSTER_PORT="7000"

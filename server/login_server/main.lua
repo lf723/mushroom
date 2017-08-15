@@ -1,12 +1,12 @@
 -- @Author: linfeng
 -- @Date:   2016-11-24 18:20:33
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-07-11 11:13:02
+-- @Last Modified time: 2017-08-14 17:14:59
 
 local skynet = require "skynet"
 require "skynet.manager"
-local cluster = require "cluster"
-local snax = require "snax"
+local cluster = require "skynet.cluster"
+local snax = require "skynet.snax"
 
 local function initLogicLuaService( selfNodeName )
 

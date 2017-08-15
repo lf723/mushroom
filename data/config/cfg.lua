@@ -1,14 +1,14 @@
 -- @Author: linfeng
 -- @Date:   2017-06-06 13:31:01
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-06 13:55:23
+-- @Last Modified time: 2017-08-14 17:12:27
 
 local skynet = require "skynet"
 require "skynet.manager"
 local string = string
 local table = table
 local math = math
-local snax = require "snax"
+local snax = require "skynet.snax"
 require "ConfigEntity"
 
 local Ent_Cfg

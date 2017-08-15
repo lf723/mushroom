@@ -1,11 +1,11 @@
 -- @Author: linfeng
 -- @Date:   2017-02-06 17:39:27
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-08-14 11:10:45
+-- @Last Modified time: 2017-08-14 17:12:13
 
 local skynet = require "skynet"
 require "skynet.manager"
-local snax = require "snax"
+local snax = require "skynet.snax"
 local string = string
 local table = table
 local math = math

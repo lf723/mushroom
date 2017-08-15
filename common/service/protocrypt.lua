@@ -1,14 +1,15 @@
 -- @Author: linfeng
 -- @Date:   2017-06-02 09:29:33
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-07-04 16:48:17
+-- @Last Modified time: 2017-08-15 09:18:17
 
 local skynet = require "skynet"
 require "skynet.manager"
 local string = string
 local table = table
 local math = math
-local sharedata = require "sharedata"
+local datasheet_builder = require "skynet.datasheet.builder"
+local datasheet = require "skynet.datasheet"
 local protobuf = require "protobuf"
 local parser = require "parser"
 
@@ -54,8 +55,7 @@ function init( ... )
 		assert("can't add protocol Enum,only init at protocrypt.lua of init function")
 	end})
 
-	sharedata.new(SHARE_PROTOCOL_ENUM, protocolEnum)
-	
+	datasheet_builder.new(SHARE_PROTOCOL_ENUM, protocolEnum)
 end
 
 function exit( ... )

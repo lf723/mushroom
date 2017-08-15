@@ -83,6 +83,7 @@ clean :
 	rm -rf $(LUA_CLIB_PATH)/*
 	rm -rf $(PREFIX)
 	rm -rf start
+	rm -rf main
 	rm -rf tool/script/client/StressTest
 	cd 3rd/luafilesystem && $(MAKE) clean && cd -
 	cd 3rd/skynet && $(MAKE) clean && cd -

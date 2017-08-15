@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-05-31 10:48:03
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-21 09:30:27
+-- @Last Modified time: 2017-08-14 17:17:34
 
 
 local svr =  "../../../common/lualib/?.lua;".."./?.lua;"
@@ -10,7 +10,7 @@ package.cpath = "../../../3rd/skynet/luaclib/?.so;../../../common/luaclib/?.so"
 
 local log = require "log.core"
 local socket = require "clientsocket"
-local crypt = require "crypt"
+local crypt = require "skynet.crypt"
 local string = string
 local table = table
 local math = math

@@ -1,26 +1,26 @@
 -- @Author: linfeng
 -- @Date:   2017-02-07 16:09:00
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-16 16:59:29
+-- @Last Modified time: 2017-08-15 09:18:19
 
 local skynet = require "skynet"
 require "skynet.manager"
-local snax = require "snax"
+local snax = require "skynet.snax"
 local string = string
 local table = table
 local math = math
 local queue = require "skynet.queue"
 local CriticalSection
 local timer = require "timer"
-local sharedata = require "sharedata"
-local protocrypt
+local datasheet = require "skynet.datasheet"
 
+local protocrypt
 local userevent = require "logic.lualib.userevent"
 
 local AgentStates = {}
 
 local function GetProtocolCmd( name )
-	local protocolEnum = assert(sharedata.query(SHARE_PROTOCOL_ENUM))
+	local protocolEnum = assert(datasheet.query(SHARE_PROTOCOL_ENUM))
 	return assert(protocolEnum[name])
 end
 

@@ -1,14 +1,15 @@
 -- @Author: linfeng
 -- @Date:   2017-05-17 17:14:13
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-07-27 13:44:39
+-- @Last Modified time: 2017-08-15 09:18:16
 
 local skynet = require "skynet"
 require "skynet.manager"
 local string = string
 local table = table
 local math = math
-local sharedata = require "sharedata"
+local datasheet_builder = require "skynet.datasheet.builder"
+local datasheet = require "skynet.datasheet"
 local cjson = require "cjson"
 
 local EntityImpl = {}
@@ -396,11 +397,11 @@ function EntityImpl:SetEntityCfg( config, common, user )
 	tb[TB_COMMON] 	= 	common
 	tb[TB_USER] 	= 	user
 
-	sharedata.new(SHARE_ENTITY_CFG, tb)
+	datasheet_builder.new(SHARE_ENTITY_CFG, tb)
 end
 
 function EntityImpl:GetEntityCfg( tbtype, tbname )
-	local tb = sharedata.query(SHARE_ENTITY_CFG)
+	local tb = datasheet.query(SHARE_ENTITY_CFG)
 	if tbname and tb then
 		for _,v in pairs(tb[tbtype]) do
 			if v.name == tbname then
@@ -421,7 +422,7 @@ function EntityImpl:MaxIdToRedis( name, key )
 end
 
 function EntityImpl:RecordMaxIdToRedis()
-	local tb = sharedata.query(SHARE_ENTITY_CFG)
+	local tb = datasheet.query(SHARE_ENTITY_CFG)
 	for _,cfg in pairs(tb) do
 		for _,tbcfg in pairs(cfg) do
 			self:MaxIdToRedis(tbcfg.name, tbcfg.key)

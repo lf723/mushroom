@@ -1,7 +1,7 @@
 -- @Author: linfeng
 -- @Date:   2017-05-25 10:53:47
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-19 15:48:55
+-- @Last Modified time: 2017-08-14 17:12:28
 
 local skynet = require "skynet"
 require "skynet.manager"
@@ -9,7 +9,7 @@ local string = string
 local table = table
 local math = math
 
-local snax = require "snax"
+local snax = require "skynet.snax"
 require "UserEntity"
 
 local Ent_D_User

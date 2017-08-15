@@ -1,11 +1,11 @@
 -- @Author: linfeng
 -- @Date:   2017-02-20 15:53:38
 -- @Last Modified by:   linfeng
--- @Last Modified time: 2017-02-20 15:59:43
+-- @Last Modified time: 2017-08-14 17:12:14
 
 local skynet = require "skynet"
 require "skynet.manager"
-local snax = require "snax"
+local snax = require "skynet.snax"
 
 local mongodbAgentSvrs = {}
 local mongodbAgentNum
