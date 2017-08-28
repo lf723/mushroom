@@ -16,7 +16,7 @@ export DAEMON=0
 export HOST="0.0.0.0"
 export PORT=11000
 export MAX_CLIENT=10000
-export CONNECT_IP="127.0.0.1"
+export CONNECT_IP="192.168.222.128"
 
 #cluster配置
 export MONITOR_NODE_NAME="monitor"
@@ -28,14 +28,12 @@ export CLUSTER_NODE="game"
 export WEB_PORT=8005
 
 #skynet DEBUG端口(telnet),0为不开启
-export DEBUG_PORT=0
-
-#时区
-export TIMEZONE=8
+export DEBUG_PORT=6005
 
 #服务器ID
-export SERVER_ID=0
+export SERVER_ID=1
 
 #启动游服
 chmod +x main
+mkdir -p logs
 ./main etc/game.conf

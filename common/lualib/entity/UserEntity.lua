@@ -26,10 +26,6 @@ function UserEntity:Init()
 	self.updateflag = {}
 end
 
-function UserEntity:GetKey(row)
-	return row[self.key]
-end
-
 -- 加载玩家数据
 function UserEntity:Load(uid, dbNode)
 	if not self.recordset[uid] then

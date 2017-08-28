@@ -99,7 +99,6 @@ function GetTableValueByIndex( tb, index )
 		if i == index then
 			return v
 		end
-
 		i = i + 1
 	end
 end

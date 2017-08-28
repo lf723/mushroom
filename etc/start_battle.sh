@@ -10,7 +10,7 @@ ulimit -n 65535
 #工作线程数量(根据CPU核心数而定)
 export WORK_THREAD=8
 #是否启动为守护模式
-export DAEMON=0
+export DAEMON=1
 
 #cluster配置
 export MONITOR_NODE_NAME="monitor"
@@ -22,14 +22,12 @@ export CLUSTER_NODE="battle"
 export WEB_PORT=8006
 
 #skynet DEBUG端口(telnet),0为不开启
-export DEBUG_PORT=0
-
-#时区
-export TIMEZONE=8
+export DEBUG_PORT=6006
 
 #服务器ID
-export SERVER_ID=0
+export SERVER_ID=1
 
 #启动游服
 chmod +x main
+mkdir -p logs
 ./main etc/battle.conf

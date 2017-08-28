@@ -1,0 +1,50 @@
+package charactor;
+
+//角色列表请求
+message CharListRequest {
+
+}
+
+//角色列表回复
+message CharListResponse {
+    message CharListInfo {
+        optional string name            = 1;            //名字
+        optional int32 headid           = 2;            //头像ID
+        optional int32 hp               = 3;            //HP
+        optional int32 maxhp            = 4;            //MAXHP
+        optional int32 attack           = 5;            //攻击
+        optional int32 defense          = 6;            //防御
+        optional int32 quick            = 7;            //敏捷
+        optional int32 earth            = 8;            //地属性
+        optional int32 water            = 9;            //水属性
+        optional int32 fire             = 10;           //火属性
+        optional int32 wing             = 11;           //风属性
+    }
+    
+    optional CharListInfo charListInfo           = 1;            //角色列表信息
+}
+
+//创建角色请求
+message CharCreateRequest {
+    message CharCreateInfo {
+        optional string name            = 1;            //名字
+        optional int32 headid           = 2;            //头像ID
+        optional int32 vit              = 3;            //体力
+        optional int32 str              = 4;            //腕力
+        optional int32 tgh              = 5;            //耐力
+        optional int32 dex              = 6;            //速度
+        optional int32 earth            = 7;            //地属性
+        optional int32 water            = 8;            //水属性
+        optional int32 fire             = 9;            //火属性
+        optional int32 wing             = 10;           //风属性
+        optional int32 pos              = 11;           //角色位置
+        optional int32 bornpoint        = 12;           //出生点
+    }
+
+    optional CharCreateInfo charCreateInfo = 1; //创建角色信息
+}
+
+//创建角色回复
+message CharCreateResponse {
+
+}

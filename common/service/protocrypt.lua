@@ -8,7 +8,6 @@ require "skynet.manager"
 local string = string
 local table = table
 local math = math
-local datasheet_builder = require "skynet.datasheet.builder"
 local datasheet = require "skynet.datasheet"
 local protobuf = require "protobuf"
 local parser = require "parser"
@@ -55,7 +54,7 @@ function init( ... )
 		assert("can't add protocol Enum,only init at protocrypt.lua of init function")
 	end})
 
-	datasheet_builder.new(SHARE_PROTOCOL_ENUM, protocolEnum)
+	SM.sharemgr.req.NewDataSheet(SHARE_PROTOCOL_ENUM, protocolEnum)
 end
 
 function exit( ... )

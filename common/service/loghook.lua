@@ -1,9 +1,13 @@
--- @Author: linfeng
--- @Date:   2017-06-19 10:52:41
--- @Last Modified by:   linfeng
--- @Last Modified time: 2017-06-19 10:52:45
+-------------------------
+--Created Date: Friday, August 18th 2017, 4:44:47 pm
+--Author: linfeng
+--Last Modified: Mon Aug 21 2017
+--Modified By: linfeng
+--Copyright (c) 2017 IGG
+-------------------------
 
 local skynet = require "skynet"
+local snax = require "skynet.snax"
 require "skynet.manager"
 
 skynet.register_protocol {
@@ -11,9 +15,7 @@ skynet.register_protocol {
     id = skynet.PTYPE_TEXT,
     unpack = skynet.tostring,
     dispatch = function(_, address, msg)
-        if address > 10 then
-            LOG_SKYNET("%x: %s", address, msg)
-        end
+        LOG_SKYNET("%x: %s", address, msg)
     end
 }
 

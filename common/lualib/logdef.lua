@@ -2,7 +2,7 @@
 -- @Date:   2017-01-09 15:55:55
 -- @Last Modified by:   linfeng
 -- @Last Modified time: 2017-08-14 18:16:30
-
+local skynet = require "skynet"
 --Log Define, level = (0-199)
 --系统级日志
 E_LOG_DEBUG 				= 			{ name = "Debug", 			level = 0 }

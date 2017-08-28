@@ -1,0 +1,18 @@
+package login;
+
+//登陆请求
+message LoginRequest {
+    optional string account             = 1;        //账号
+    optional string passwd              = 2;        //密码
+}
+
+//登陆回复
+message LoginResponse {
+    message ServerList {
+        optional string name            = 1;
+        optional string ip              = 2;
+        optional int32 port             = 3;
+    }
+
+    repeated ServerList serverlist      = 1;         //服务器列表
+}

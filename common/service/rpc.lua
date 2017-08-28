@@ -13,7 +13,6 @@ local datasheet = require "skynet.datasheet"
 local string = string
 local table = table
 local math = math
-local EntityImpl = "entity.EntityImpl"
 
 function response.RemoteSvr( node, svrname )
 	local ok,snax_obj = pcall(cluster.snax, node, svrname)
@@ -38,7 +37,7 @@ function response.updateClusterName( clusterInfo )
 	f:close()
 	cluster.reload()
 
-	datasheet_builder.update(SHARE_CLUSTER_CFG, clusterInfo)
+	SM.sharemgr.req.UpdateDataSheet(SHARE_CLUSTER_CFG, clusterInfo)
 end
 
 function response.RemoteCall( service, method, ... )
@@ -54,11 +53,10 @@ function response.GetClusterCfg( ... )
 end
 
 function init( ... )
-	--new cluster node shared data
-	datasheet_builder.new(SHARE_CLUSTER_CFG, {})
+	SM.sharemgr.req.NewDataSheet(SHARE_CLUSTER_CFG, {})
 	snax.enablecluster()
 end
 
 function exit( ... )
-	datasheet_builder.delete(SHARE_CLUSTER_CFG)
+	SM.sharemgr.req.DeleteDataSheet(SHARE_CLUSTER_CFG)
 end

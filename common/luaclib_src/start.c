@@ -35,6 +35,7 @@ void ShowUsage()
 {
 	FAIL("Usage: \n-h\tthis help\n"
 					"-a\tstart all services\n"
+					"-f\tforce run in daemon\n"
 					"-l\tstart login server,default use etc/start_login.sh\n"
 					"-g\tstart game server,default use etc/start_game.sh\n"
 					"-b\tstart battle server,default use etc/start_battle.sh\n"
@@ -42,15 +43,17 @@ void ShowUsage()
 					"-r\tstart redis server,default use etc/start_redis.sh\n"
 					"-d\tstart db server,default use etc/start_db.sh\n"
 					"-c\tstart center server,default use etc/start_center.sh\n"
-					"-s\t[name]\tstop server by name\n");
+					"-s\t[name]\tstop server by name, if name is 'all', then kill all service\n");
 }
+
+bool boot_daemon = false;
 
 void boot_server(char* name,char* shell, bool all_start)
 {
 	OK("start %s server...",name);
 	char cmd[128] = {0};
-	int f_daemon = all_start ? 0 : 1;
-	int t_daemon = all_start ? 1 : 0;
+	int f_daemon = (all_start || boot_daemon) ? 0 : 1;
+	int t_daemon = (all_start || boot_daemon) ? 1 : 0;
 	//修改daemon参数
 	snprintf(cmd,sizeof(cmd), "sed -i \"s/export DAEMON=%d/export DAEMON=%d/g\" %s", f_daemon, t_daemon, shell);
 	if(system(cmd) == -1)
@@ -68,13 +71,20 @@ void boot_server(char* name,char* shell, bool all_start)
 
 void kill_server(char* name)
 {
+	if(strcmp(name,"all") == 0)
+	{
+		system("pkill main");
+		OK("kill <%s> server...ok!",name);
+		return;
+	}
+		
 	OK("kill <%s> server...",name);
 
 	//get pid
 	FILE* f = NULL;
 	int processid = 0;
 	char cmd[128] = {0};
-	snprintf(cmd,sizeof(cmd),"cat logs/%s.pid",name);
+	snprintf(cmd,sizeof(cmd),"ls logs/%s*.pid | xargs cat",name);
 	if((f = popen(cmd,"r")) == NULL)
 		FAIL("not found logs/%s.pid file,stop fail.",name);
 	if(fgets(cmd,sizeof(cmd),f) == NULL)
@@ -85,11 +95,11 @@ void kill_server(char* name)
 	else
 		processid = atoi(cmd);
 
-	snprintf(cmd,sizeof(cmd),"kill -1 %d",processid);
+	snprintf(cmd,sizeof(cmd),"kill -9 %d",processid);
 	if(system(cmd) == -1)
 		FAIL("kill %s fail",name);
 
-	OK("kill <%s> ok",name);
+	OK("kill <%s> (%d) ok",name,processid);
 }
 
 int main(int argc, char* argv[]) 
@@ -102,7 +112,7 @@ int main(int argc, char* argv[])
 	bool all_start = false;
 	char process_name[128] = {0};
 	int opt;
-	while((opt = getopt(argc,argv,"algbms:cdwhr")) != -1)
+	while((opt = getopt(argc,argv,"algbms:cdwhrf")) != -1)
 	{
 		switch(opt)
 		{
@@ -138,6 +148,9 @@ int main(int argc, char* argv[])
 				break;
 			case 'r':
 				boot_redis = true;
+				break;
+			case 'f':
+				boot_daemon = true;
 				break;
 			default: /* '?',':' */
 				ShowUsage();

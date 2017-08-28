@@ -17,14 +17,12 @@ export CLUSTER_PORT="7000"
 export WEB_PORT=8000
 
 #skynet DEBUG端口(telnet),0为不开启
-export DEBUG_PORT=6666
-
-#时区
-export TIMEZONE=8
+export DEBUG_PORT=6000
 
 #服务器ID
-export SERVER_ID=0
+export SERVER_ID=1
 
 #启动游服
 chmod +x main
+mkdir -p logs
 ./main etc/monitor.conf

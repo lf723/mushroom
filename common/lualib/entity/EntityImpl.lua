@@ -8,14 +8,23 @@ require "skynet.manager"
 local string = string
 local table = table
 local math = math
-local datasheet_builder = require "skynet.datasheet.builder"
 local datasheet = require "skynet.datasheet"
 local cjson = require "cjson"
-
 local EntityImpl = {}
 
 function EntityImpl:MakeRedisKey(row, key)
 	return row[key]
+end
+
+function EntityImpl:MergeMysqlNumberString( cmd, value )
+	local valueType = type(value)
+	if valueType == "string" then
+		return cmd .. "'%s'"
+	elseif valueType == "number" then
+		return cmd .. "%d"
+	else
+		assert(false, "invalid type(" .. valueType .. ") for msyql cmd merge")
+	end
 end
 
 function EntityImpl:loadConfigMysqlImpl( tbname )
@@ -58,7 +67,6 @@ function EntityImpl:loadCommonMysqlImpl( tbname )
 	local cmd = ""
 
 	local commonEntity = self:GetEntityCfg(TB_COMMON, tbname)
-
 	while true do
 		cmd = string.format("select * from %s limit %d,%d",commonEntity.name,index,index_limit)
 		local sqlRet = MySqlExecute(cmd)
@@ -71,10 +79,10 @@ function EntityImpl:loadCommonMysqlImpl( tbname )
 
 			--set to memory
 			ret[tonumber(row[commonEntity.key])] = decodeRow
+			if max_pk < pk then max_pk = pk end
 		end
 
 		if #sqlRet < index_limit then break end
-
 		index = index + index_limit
 	end
 	return ret
@@ -82,6 +90,28 @@ end
 
 function EntityImpl:loadCommonMongoImpl( tbname )
 	assert(false,"not impl loadCommonMongoImpl")
+end
+
+function EntityImpl:loadCommonSingleMysqlImpl( tbname, indexvalue )
+	local commonEntity = self:GetEntityCfg(TB_COMMON, tbname)
+	local cmd = string.format(self:MergeMysqlNumberString("select * from %s where %s->'$.%s' = ",indexvalue),
+																							commonEntity.name,
+																							commonEntity.value,
+																							commonEntity.indexkey,
+																							indexvalue
+							)
+
+	local sqlRet = MySqlExecute(cmd)
+	if #sqlRet <= 0 then return end
+	sqlRet = sqlRet[1]
+	
+	--json extract
+	assert(table.size(sqlRet) == 2, "mysql table("..commonEntity.name..") schema must be key-value")
+	return cjson.decode(GetTableValueByIndex(sqlRet,2))
+end
+
+function EntityImpl:loadCommonSingleMongoImpl( tbname, indexvalue )
+	assert(false,"not impl loadCommonSingleMongoImpl")
 end
 
 function EntityImpl:loadUserRedisImpl( tbname, uid )
@@ -101,11 +131,11 @@ function EntityImpl:loadUserMysqlImpl( tbname, uid )
 
 	local cmd = ""
 	local userEntity = self:GetEntityCfg(TB_USER, tbname)
-	cmd = string.format("select * from %s where %s->'$.%s' = %d", 
-																userEntity.name, 
-																userEntity.value, 
-																userEntity.indexkey, 
-																uid
+	cmd = string.format(self:MergeMysqlNumberString("select * from %s where %s->'$.%s' = ",uid), 
+																					userEntity.name, 
+																					userEntity.value, 
+																					userEntity.indexkey, 
+																					uid
 						)
 
 	local sqlRet = MySqlExecute(cmd)
@@ -119,7 +149,6 @@ function EntityImpl:loadUserMysqlImpl( tbname, uid )
 		local redisKey = self:MakeRedisKey(decodeRow,userEntity.indexkey)
 		cmd = string.format("hmset %s:%s %s",userEntity.name,redisKey,redisDecodeRow)
 		RedisExecute(cmd) --default to first redis instance
-
 		--set to memory
 		ret = decodeRow
 	end
@@ -146,15 +175,23 @@ function EntityImpl:LoadConfig( tbname, dbNode )
 	end
 end
 
-function EntityImpl:LoadCommon( tbname, dbNode )
+function EntityImpl:LoadCommon( tbname, dbNode, indexvalue )
 	if dbNode then
-		return RpcCall(dbNode, REMOTE_SERVICE, REMOTE_CALL, tbname, "Load" )
+		return RpcCall(dbNode, REMOTE_SERVICE, REMOTE_CALL, tbname, "Load", indexvalue )
 	else
 		--从db获取common数据
 		if G_DBTYPE == DBTYPE_MYSQL then
-			return self:loadCommonMysqlImpl(tbname)
+			if indexvalue then
+				return self:loadCommonSingleMysqlImpl(tbname, indexvalue)
+			else
+				return self:loadCommonMysqlImpl(tbname)
+			end
 		elseif G_DBTYPE == DBTYPE_MONGO then
-			return self:loadCommonMongoImpl(tbname)
+			if indexvalue then
+				return self:loadCommonSingleMongoImpl(tbname, indexvalue)
+			else
+				return self:loadCommonMongoImpl(tbname)
+			end
 		else
 			assert(false,"invalid dbtype:" .. G_DBTYPE .. ",only mysql or mongo")
 		end
@@ -187,15 +224,15 @@ function EntityImpl:UpdateCommonMysql( tbname, dataIndex )
 	assert(type(dataIndex) == "table")
 	local obj = self:GetEntityCfg(TB_COMMON, tbname)
 	
-	local sql = string.format("update %s set %s = '%s' where %d = %d;",
-																		obj.name, 
-																		obj.value, 
-																		cjson.encode(dataIndex),
-																		obj.key,
-																		dataIndex[obj.key]
+	local sql = string.format(self:MergeMysqlNumberString("update %s set %s = '%s' where %s->'$.%s' = ",dataIndex[obj.indexkey]),
+																									obj.name, 
+																									obj.value, 
+																									cjson.encode(dataIndex),
+																									obj.value, 
+																									obj.indexkey,
+																									dataIndex[obj.indexkey]
 							)
 		
-
 	--update obj.name by dataIndex's index to mysql
 	local ret = MySqlExecute(sql) 
 	--check ret
@@ -215,13 +252,13 @@ function EntityImpl:UpdateUserMysql( tbname, dataIndex )
 	local obj = self:GetEntityCfg(TB_USER, tbname)
 	local uid = assert(dataIndex[obj.indexkey])
 	--mysql
-	local sqlCmd = string.format("update %s set %s = '%s' where %s->'$.%s' = %d;",
-																					obj.name, 
-																					obj.value, 
-																					cjson.encode(dataIndex),
-																					obj.value,
-																					obj.indexkey,
-																					uid
+	local sqlCmd = string.format(self:MergeMysqlNumberString("update %s set %s = '%s' where %s->'$.%s' = ",uid),
+																									obj.name, 
+																									obj.value, 
+																									cjson.encode(dataIndex),
+																									obj.value,
+																									obj.indexkey,
+																									uid
 								)
 	
 
@@ -279,10 +316,10 @@ function EntityImpl:DelCommonMysql( tbname, dataKeys)
 	assert(type(dataKeys) == "table")
 	local obj = assert(self:GetEntityCfg(TB_COMMON, tbname))
 	local key = dataKeys[obj.key]
-	local sqlCmd = string.format("delete from %s where %s = %d;",
-																		obj.name,
-																		obj.key,
-																		key						
+	local sqlCmd = string.format(self:MergeMysqlNumberString("delete from %s where %s = ",key),
+																					obj.name,
+																					obj.key,
+																					key						
 	)
 
 	--del obj.name by dataKeys's index to mysql
@@ -303,11 +340,11 @@ function EntityImpl:DelUserMysql( tbname, dataKeys )
 	local obj = assert(self:GetEntityCfg(TB_USER, tbname))
 
 	local uid = dataKeys[obj.indexkey]
-	local sqlCmd = string.format("delete from %s where %s->'$.%s' = %d;",
-																		obj.name,
-																		obj.value,
-																		obj.indexkey,
-																		uid						
+	local sqlCmd = string.format(self:MergeMysqlNumberString("delete from %s where %s->'$.%s' = ",uid),
+																							obj.name,
+																							obj.value,
+																							obj.indexkey,
+																							uid						
 	)
 
 	--del obj.name by dataKeys's index to mysql
@@ -397,7 +434,8 @@ function EntityImpl:SetEntityCfg( config, common, user )
 	tb[TB_COMMON] 	= 	common
 	tb[TB_USER] 	= 	user
 
-	datasheet_builder.new(SHARE_ENTITY_CFG, tb)
+	SM.sharemgr.req.NewDataSheet(SHARE_ENTITY_CFG, tb)
+	self:RecordMaxIdToRedis()
 end
 
 function EntityImpl:GetEntityCfg( tbtype, tbname )
@@ -414,10 +452,10 @@ function EntityImpl:GetEntityCfg( tbtype, tbname )
 end
 
 function EntityImpl:MaxIdToRedis( name, key )
-	local cmd = string.format("select max(%s) as id from %s",key,name)
+	local cmd = string.format("select max(%s) as %s from %s",key,key,name)
 	local ret = MySqlExecute(cmd)
-	assert(ret[badresult] == nil)
-	cmd = string.format("set %s:%s %d",name,key,tonumber(ret[1].id) or 0)
+	assert(ret.badresult == nil, "execute sql fail:"..cmd..",err:"..(ret.err or ""))
+	cmd = string.format("set %s:%s %d",name,key,tonumber(ret[1][key]) or 0)
 	RedisExecute(cmd)
 end
 

@@ -18,7 +18,7 @@ local heartError = {}
 local function ClusterHold( ... )
 	local CheckStr = "check"
 	while true do
-		skynet.sleep(3 * 100)
+		skynet.sleep(10 * 100) --check per 10s
 		local sync = false
 		for node,info in pairs(clusterInfo) do
 			if node ~= thisNodeName then
@@ -56,7 +56,8 @@ function init( selfNodeName )
 
 		--init clustername.lua
 		local f = io.open("etc/clustername.lua","w+")
-		f:write(thisNodeName.. "=" .. ip .. ":" .. port)
+		local clusterMsg = thisNodeName.. "=\"".. ip .. ":" .. port .. "\""
+		f:write(clusterMsg)
 		f:flush()
 		f:close()
 

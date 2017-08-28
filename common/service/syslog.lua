@@ -37,9 +37,9 @@ function accept.log( msg )
 	skynet.wakeup(thread_co) --唤醒协程
 end
 
-function init( selfNodeName )
+function init( )
+	local selfNodeName = skynet.getenv("clusternode")..(skynet.getenv("serverid") or 0)
 	logger.init(0,0,0,selfNodeName)
-
 	thread_co = assert(skynet.fork(LogWorker),"syslog fork LogWorker fail")
 end
 

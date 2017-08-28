@@ -18,7 +18,10 @@ function ConfigEntity:dtor()
 end
 
 function ConfigEntity:Init()
-
+	local ret = assert(EntityImpl:GetEntityCfg( TB_CONFIG, self.tbname ))
+	self.key = ret.key
+	self.indexkey = ret.indexkey
+	self.value = ret.value
 end
 
 function ConfigEntity:Load()
